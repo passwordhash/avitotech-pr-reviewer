@@ -1,0 +1,31 @@
+// TODO: docs
+package app
+
+import (
+	httpapp "avitotech-pr-reviewer/internal/app/http"
+	"avitotech-pr-reviewer/internal/config"
+	"context"
+	"log/slog"
+)
+
+type App struct {
+	Srv *httpapp.App
+}
+
+func New(
+	_ context.Context,
+	lgr *slog.Logger,
+	cfg *config.Config,
+) *App {
+	srv := httpapp.New(
+		lgr.WithGroup("http"),
+		httpapp.WithPort(cfg.HTTP.Port),
+		httpapp.WithReadTimeout(cfg.HTTP.ReadTimeout),
+		httpapp.WithWriteTimeout(cfg.HTTP.ReadTimeout),
+		httpapp.WithRequestTimeout(cfg.HTTP.ReadTimeout),
+	)
+
+	return &App{
+		Srv: srv,
+	}
+}

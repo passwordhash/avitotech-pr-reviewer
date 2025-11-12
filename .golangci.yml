@@ -1,0 +1,44 @@
+version: "2"
+run:
+    tests: true
+    concurrency: 4
+    timeout: 5m
+
+linters:
+    default: all
+    enable:
+        - revive
+        - errcheck
+        - unparam
+        - dupl
+        - misspell
+        - gocyclo
+        - goconst
+        - godot
+        - gosec
+        - ineffassign
+        - unconvert
+        - copyloopvar
+        - bodyclose
+        - exhaustruct
+        - prealloc
+        - nakedret
+        - noctx
+        - forbidigo
+        - asasalint
+        - unused
+        - lll
+        - nolintlint
+        - rowserrcheck
+        - sqlclosecheck
+        - wastedassign
+        - errorlint
+        - makezero
+        - containedctx
+        - dogsled
+        - tagliatelle
+        - goheader
+
+issues:
+    max-issues-per-linter: 0
+    max-same-issues: 0
