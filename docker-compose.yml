@@ -1,0 +1,33 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        ports:
+            - "8080:8080"
+        env_file:
+            - .env.local
+        depends_on:
+            - postgres
+
+    postgres:
+        image: postgres:15
+        restart: always
+        ports:
+            - "${POSTGRES_PORT}:5432"
+        env_file:
+            -   .env.local
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - shared-net
+
+volumes:
+    pgdata:
+
+networks:
+    shared-net:
