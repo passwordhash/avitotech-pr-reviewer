@@ -1,4 +1,5 @@
-// TODO: docs
+// Package httpapp реализует HTTP сервер с возможностью настройки параметров
+// через func options. Сервер использует фреймворк Gin для обработки HTTP запросов.
 package httpapp
 
 import (
@@ -7,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +29,7 @@ type App struct {
 	writeTimeout   time.Duration
 	requestTimeout time.Duration
 
+	mu     sync.Mutex
 	server *http.Server
 }
 
@@ -63,7 +66,10 @@ func WithRequestTimeout(timeout time.Duration) Option {
 
 func New(lgr *slog.Logger, opts ...Option) *App {
 	app := &App{
-		lgr: lgr,
+		lgr:            lgr,
+		readTimeout:    srvReadTimeoutDefault,
+		writeTimeout:   srvWriteTimeoutDefault,
+		requestTimeout: srvGatewayTimeoutDefault,
 	}
 
 	for _, opt := range opts {
@@ -73,6 +79,7 @@ func New(lgr *slog.Logger, opts ...Option) *App {
 	return app
 }
 
+// MustRun запускает HTTP сервер и паникует в случае ошибки.
 func (a *App) MustRun(ctx context.Context) {
 	err := a.Run(ctx)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -80,6 +87,7 @@ func (a *App) MustRun(ctx context.Context) {
 	}
 }
 
+// Run запускает HTTP сервер.
 func (a *App) Run(ctx context.Context) error {
 	const op = "httpapp.Run"
 
@@ -101,6 +109,11 @@ func (a *App) Run(ctx context.Context) error {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	app.GET("/long", func(c *gin.Context) {
+		time.Sleep(3 * time.Second)
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", a.port),
 		Handler:      app,
@@ -111,4 +124,26 @@ func (a *App) Run(ctx context.Context) error {
 	a.server = srv
 
 	return srv.ListenAndServe()
+}
+
+// Stop останавливает HTTP сервер.
+// Нужно дожидаться завершения работы этого метода.
+// Контекст должен быть с тайм-аутом, чтобы избежать
+// зависания в случае проблем с остановкой сервера.
+func (a *App) Stop(ctx context.Context) error {
+	const op = "httpapp.Stop"
+
+	lgr := a.lgr.With("op", op)
+
+	lgr.Info("stopping HTTP http_server")
+
+	a.mu.Lock()
+	server := a.server
+	a.mu.Unlock()
+
+	if err := server.Shutdown(ctx); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }

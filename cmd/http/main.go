@@ -8,6 +8,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+)
+
+const (
+	shutdownTimeout = 10 * time.Second
 )
 
 func main() {
@@ -18,18 +23,29 @@ func main() {
 	}()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGINT)
-	defer cancel() // TODO: есть ли смысл в этом cancel ?
+	defer cancel()
 
 	cfg := config.MustLoad()
 
 	lgr := config.NewLogger(cfg.Env)
 	slog.SetDefault(lgr)
 
-	lgr.Info("starting pr-reviewer applicaitoin")
+	lgr.Info("starting pr-reviewer application")
 
 	application := app.New(ctx, lgr, cfg)
 
 	go application.Srv.MustRun(ctx)
 
-	<- ctx.Done()
+	<-ctx.Done()
+
+	lgr.Info("received stop signal")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := application.Srv.Stop(shutdownCtx); err != nil {
+		lgr.Error("failed to stop http_server gracefully", "err", err)
+	} else {
+		lgr.Info("PR Reviewer application http_server stopped gracefully")
+	}
 }
