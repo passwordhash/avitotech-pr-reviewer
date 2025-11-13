@@ -1,19 +1,10 @@
 services:
-    app:
-        build:
-            context: .
-            dockerfile: Dockerfile.dev
-        ports:
-            - "8080:8080"
-        env_file: .env.local
-        depends_on:
-            - postgres
-
     postgres:
         image: postgres:15
+        container_name: pr-review-postgres
         restart: always
         ports:
-            - "${POSTGRES_PORT}:5432"
+            - "${POSTGRES_PORT:-5432}:5432"
         env_file: .env.local
         environment:
             POSTGRES_DB: ${POSTGRES_DB}
@@ -24,14 +15,14 @@ services:
         networks:
             - shared-net
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
-            interval: 30s
-            timeout: 60s
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+            interval: 10s
+            timeout: 5s
             retries: 5
-            start_period: 80s
+            start_period: 10s
 
     migrate:
-        image: migrate/migrate:v4.19.0
+        image: migrate/migrate:v4.18.1
         env_file: .env.local
         networks:
             - shared-net
@@ -42,14 +33,32 @@ services:
               "sleep 5 && migrate -path /migrations -database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable up",
           ]
         depends_on:
-            - postgres
+            postgres:
+                condition: service_healthy
         volumes:
-            - ../migrations:/migrations
+            - ./migrations:/migrations
+        restart: on-failure
 
-
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        container_name: pr-review-app
+        ports:
+            - "8080:8080"
+        env_file: .env.local
+        networks:
+            - shared-net
+        depends_on:
+            postgres:
+                condition: service_healthy
+            migrate:
+                condition: service_completed_successfully
+        restart: unless-stopped
 
 volumes:
     pgdata:
 
 networks:
     shared-net:
+        driver: bridge

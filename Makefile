@@ -1,8 +1,10 @@
 ifneq ("$(wildcard .env)", "")
+	include .env.local
 	include .env
 	export $(shell sed 's/=.*//' .env)
 endif
 
+POSTGRES_HOST = localhost
 
 # ==========================
 # Локальная разработка / Тесты
