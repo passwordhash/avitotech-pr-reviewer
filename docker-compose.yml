@@ -5,8 +5,7 @@ services:
             dockerfile: Dockerfile.dev
         ports:
             - "8080:8080"
-        env_file:
-            - .env.local
+        env_file: .env.local
         depends_on:
             - postgres
 
@@ -15,8 +14,7 @@ services:
         restart: always
         ports:
             - "${POSTGRES_PORT}:5432"
-        env_file:
-            -   .env.local
+        env_file: .env.local
         environment:
             POSTGRES_DB: ${POSTGRES_DB}
             POSTGRES_USER: ${POSTGRES_USER}
@@ -25,6 +23,30 @@ services:
             - pgdata:/var/lib/postgresql/data
         networks:
             - shared-net
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+            interval: 30s
+            timeout: 60s
+            retries: 5
+            start_period: 80s
+
+    migrate:
+        image: migrate/migrate:v4.19.0
+        env_file: .env.local
+        networks:
+            - shared-net
+        entrypoint:
+          [
+              "sh",
+              "-c",
+              "sleep 5 && migrate -path /migrations -database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable up",
+          ]
+        depends_on:
+            - postgres
+        volumes:
+            - ../migrations:/migrations
+
+
 
 volumes:
     pgdata:
