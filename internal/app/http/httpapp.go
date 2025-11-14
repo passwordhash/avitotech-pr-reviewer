@@ -11,6 +11,9 @@ import (
 	"sync"
 	"time"
 
+	teamHandler "avitotech-pr-reviewer/internal/api/v1/team"
+	usersHandler "avitotech-pr-reviewer/internal/api/v1/users"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -64,6 +67,7 @@ func WithRequestTimeout(timeout time.Duration) Option {
 	}
 }
 
+// New создает новый экземпляр HTTP сервера с заданными опциями.
 func New(lgr *slog.Logger, opts ...Option) *App {
 	app := &App{
 		lgr:            lgr,
@@ -98,21 +102,21 @@ func (a *App) Run(ctx context.Context) error {
 
 	lgr.InfoContext(ctx, "starting HTTP http_server")
 
-	// инициализация хендлеров ...
+	teamHlr := teamHandler.New()
+	usersHlr := usersHandler.New()
 
 	app := gin.New()
 	app.Use(gin.Recovery())
-
-	// регистрация маршрутов ...
 
 	app.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	app.GET("/long", func(c *gin.Context) {
-		time.Sleep(3 * time.Second)
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-	})
+	api := app.Group("/api")
+	v1 := api.Group("/v1")
+
+	teamHlr.RegisterRoutes(v1)
+	usersHlr.RegisterRoutes(v1)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", a.port),

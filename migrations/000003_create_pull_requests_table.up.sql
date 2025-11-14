@@ -24,3 +24,5 @@ CREATE TABLE IF NOT EXISTS pull_request_reviewers (
 );
 
 CREATE INDEX idx_pr_author ON pull_requests(author_id);
+
+-- TODO: продумать индексы
