@@ -15,7 +15,11 @@ services:
         networks:
             - shared-net
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+                ]
             interval: 10s
             timeout: 5s
             retries: 5
@@ -27,11 +31,11 @@ services:
         networks:
             - shared-net
         entrypoint:
-          [
-              "sh",
-              "-c",
-              "sleep 5 && migrate -path /migrations -database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable up",
-          ]
+            [
+                "sh",
+                "-c",
+                "sleep 5 && migrate -path /migrations -database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable up",
+            ]
         depends_on:
             postgres:
                 condition: service_healthy
