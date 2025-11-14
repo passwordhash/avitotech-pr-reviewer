@@ -13,6 +13,7 @@ import (
 
 	teamHandler "avitotech-pr-reviewer/internal/api/v1/team"
 	usersHandler "avitotech-pr-reviewer/internal/api/v1/users"
+	teamService "avitotech-pr-reviewer/internal/service/team"
 
 	"github.com/gin-gonic/gin"
 )
@@ -102,7 +103,9 @@ func (a *App) Run(ctx context.Context) error {
 
 	lgr.InfoContext(ctx, "starting HTTP http_server")
 
-	teamHlr := teamHandler.New()
+	teamSvc := teamService.New(lgr)
+
+	teamHlr := teamHandler.New(teamSvc)
 	usersHlr := usersHandler.New()
 
 	app := gin.New()

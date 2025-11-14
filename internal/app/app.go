@@ -3,10 +3,11 @@
 package app
 
 import (
-	httpapp "avitotech-pr-reviewer/internal/app/http"
-	"avitotech-pr-reviewer/internal/config"
 	"context"
 	"log/slog"
+
+	httpapp "avitotech-pr-reviewer/internal/app/http"
+	"avitotech-pr-reviewer/internal/config"
 )
 
 type App struct {

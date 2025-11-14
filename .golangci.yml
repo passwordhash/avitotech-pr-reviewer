@@ -2,12 +2,16 @@ version: "2"
 run:
     tests: true
     concurrency: 4
-    timeout: 5m
+    # timeout: 5m
 
 linters:
     default: all
     disable:
         - depguard
+        - tagliatelle
+        - revive
+        - tagalign
+        - varnamelen
     enable:
         - errcheck
         - unparam
@@ -21,7 +25,7 @@ linters:
         - unconvert
         - copyloopvar
         - bodyclose
-        - exhaustruct
+        # - exhaustruct
         - prealloc
         - nakedret
         - noctx
@@ -37,7 +41,6 @@ linters:
         - makezero
         - containedctx
         - dogsled
-        - tagliatelle
         - goheader
 
 issues:

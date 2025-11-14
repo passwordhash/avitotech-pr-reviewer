@@ -1,11 +1,23 @@
 package team
 
-import "github.com/gin-gonic/gin"
+import (
+	"avitotech-pr-reviewer/internal/domain"
 
-type handler struct{}
+	"github.com/gin-gonic/gin"
+)
 
-func New() *handler {
-	return &handler{}
+type teamService interface {
+	Add(teamName string, members []domain.User) error
+}
+
+type handler struct {
+	teamSvc teamService
+}
+
+func New(teamSvc teamService) *handler {
+	return &handler{
+		teamSvc: teamSvc,
+	}
 }
 
 func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
