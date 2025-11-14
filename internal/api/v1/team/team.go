@@ -16,7 +16,7 @@ func (h *handler) add(c *gin.Context) {
 		return
 	}
 
-	err = h.teamSvc.Add(req.TeamName, req.ToDomainMembers())
+	err = h.teamSvc.CreateTeam(c, req.TeamName, req.ToDomainMembers())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}

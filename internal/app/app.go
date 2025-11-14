@@ -8,6 +8,7 @@ import (
 
 	httpapp "avitotech-pr-reviewer/internal/app/http"
 	"avitotech-pr-reviewer/internal/config"
+	teamService "avitotech-pr-reviewer/internal/service/team"
 )
 
 type App struct {
@@ -19,8 +20,14 @@ func New(
 	lgr *slog.Logger,
 	cfg *config.Config,
 ) *App {
+	// pkgPool ...
+
+	// repos ...
+	teamSvc := teamService.New(lgr.WithGroup("team_service"))
+
 	srv := httpapp.New(
-		lgr.WithGroup("http"),
+		lgr.WithGroup("httpapp"),
+		teamSvc,
 		httpapp.WithPort(cfg.HTTP.Port),
 		httpapp.WithReadTimeout(cfg.HTTP.ReadTimeout),
 		httpapp.WithWriteTimeout(cfg.HTTP.ReadTimeout),

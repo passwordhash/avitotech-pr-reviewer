@@ -28,6 +28,8 @@ const (
 type App struct {
 	lgr *slog.Logger
 
+	teamSvc *teamService.Service
+
 	port           int
 	readTimeout    time.Duration
 	writeTimeout   time.Duration
@@ -69,9 +71,14 @@ func WithRequestTimeout(timeout time.Duration) Option {
 }
 
 // New создает новый экземпляр HTTP сервера с заданными опциями.
-func New(lgr *slog.Logger, opts ...Option) *App {
+func New(
+	lgr *slog.Logger,
+	teamSvc *teamService.Service,
+	opts ...Option,
+) *App {
 	app := &App{
 		lgr:            lgr,
+		teamSvc:        teamSvc,
 		readTimeout:    srvReadTimeoutDefault,
 		writeTimeout:   srvWriteTimeoutDefault,
 		requestTimeout: srvGatewayTimeoutDefault,
@@ -103,9 +110,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	lgr.InfoContext(ctx, "starting HTTP http_server")
 
-	teamSvc := teamService.New(lgr)
-
-	teamHlr := teamHandler.New(teamSvc)
+	teamHlr := teamHandler.New(a.teamSvc)
 	usersHlr := usersHandler.New()
 
 	app := gin.New()

@@ -1,13 +1,15 @@
 package team
 
 import (
+	"context"
+
 	"avitotech-pr-reviewer/internal/domain"
 
 	"github.com/gin-gonic/gin"
 )
 
 type teamService interface {
-	Add(teamName string, members []domain.User) error
+	CreateTeam(ctx context.Context, teamName string, members []domain.User) error
 }
 
 type handler struct {
