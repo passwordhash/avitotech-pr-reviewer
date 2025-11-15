@@ -11,6 +11,8 @@ linters:
         - wsl_v5
         - depguard
         - exhaustruct
+        - paralleltest
+        - testpackage
         - wrapcheck
         - nlreturn
         - ireturn

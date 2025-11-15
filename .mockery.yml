@@ -1,0 +1,13 @@
+all: false
+dir: "{{.InterfaceDir}}/mocks"
+filename: "{{.InterfaceName | lower}}_mock.go"
+structname: "Mock{{.InterfaceName}}"
+formatter: goimports
+pkgname: mocks
+template: testify
+
+packages:
+    avitotech-pr-reviewer/internal/service/team:
+        interfaces:
+            TeamRepository:
+            UserRepository:
