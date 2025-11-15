@@ -11,11 +11,10 @@ type User struct {
 
 func (u User) ToUserDomain() *domain.User {
 	return &domain.User{
+		ID:       u.UserID,
 		Username: u.Username,
 		IsActive: u.IsActive,
-		Team: domain.Team{
-			ID: u.TeamID,
-		},
+		TeamID:   u.TeamID,
 	}
 }
 

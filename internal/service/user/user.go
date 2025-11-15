@@ -49,28 +49,33 @@ func (s Service) SetIsActive(ctx context.Context, userID string, isActive bool) 
 	)
 
 	userItem, err := s.userRepo.SetIsActive(ctx, userID, isActive)
-	// ...
-	if err != nil {
-		lgr.ErrorContext(ctx, "failed to set is active", slog.Any("error", err))
-
-		return nil, fmt.Errorf("%s: failed to set is active: %w", op, err)
-	}
-
-	lgr.Info("user active status updated successfully")
-
-	teamItem, err := s.teamRepo.GetByID(ctx, userItem.Team.ID)
 	if errors.Is(err, repoErr.ErrUserNotFound) {
-		lgr.DebugContext(ctx, "team not found", slog.Any("error", err))
+		lgr.DebugContext(ctx, "user not found", slog.Any("error", err))
 
 		return nil, svcErr.ErrUserNotFound
 	}
 	if err != nil {
 		lgr.ErrorContext(ctx, "failed to set is active", slog.Any("error", err))
 
-		return nil, fmt.Errorf("%s: failed to set is active: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	userItem.Team.Name = teamItem.Name
+	//nolint:nolintlint,godox    // TODO: операция получается не атомарной, нужно подумать как это исправить
+	lgr.Info("user active status updated successfully")
+
+	teamItem, err := s.teamRepo.GetByID(ctx, userItem.TeamID)
+	if errors.Is(err, repoErr.ErrTeamNotFound) {
+		lgr.DebugContext(ctx, "team not found", slog.Any("error", err))
+
+		return nil, svcErr.ErrTeamNotFound
+	}
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to set is active", slog.Any("error", err))
+
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	userItem.TeamName = teamItem.Name
 
 	return userItem, nil
 }

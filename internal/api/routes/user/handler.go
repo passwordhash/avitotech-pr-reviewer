@@ -23,7 +23,7 @@ func New(userSvc userService) *handler {
 }
 
 func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
-	usersGroup := router.Group("/user")
+	usersGroup := router.Group("/users")
 	{
 		usersGroup.POST("/setIsActive", h.setIsActive)
 		usersGroup.GET("/getReview", h.getReview)

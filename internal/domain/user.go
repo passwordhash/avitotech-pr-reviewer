@@ -4,5 +4,6 @@ type User struct {
 	ID       string
 	Username string
 	IsActive bool
-	Team Team
+	TeamID string
+	TeamName string
 }

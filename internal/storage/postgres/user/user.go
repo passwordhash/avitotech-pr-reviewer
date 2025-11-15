@@ -65,22 +65,15 @@ func (r *Repository) SetIsActive(ctx context.Context, userID string, isActive bo
 		RETURNING user_id, username, is_active, team_id
 	`
 
-	rows, err := r.db.Query(ctx, updateQuery, isActive, userID)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-	defer rows.Close()
-
-	userDB, err := pgPkg.RowToStructByName[model.User](rows)
+	row := r.db.QueryRow(ctx, updateQuery, isActive, userID)
+	var userDB model.User
+	err := row.Scan(&userDB.UserID, &userDB.Username, &userDB.IsActive, &userDB.TeamID)
 	if pgPkg.IsNoRowsError(err) {
 		return nil, fmt.Errorf("%s: %w", op, repoErr.ErrUserNotFound)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("%s: map row: %w", op, err)
+		return nil, fmt.Errorf("%s: scan row: %w", op, err)
 	}
 
-	_ = userDB
-	panic("unreachable")
-
-	// return userDB.ToDomain(), nil
+	return userDB.ToUserDomain(), nil
 }
