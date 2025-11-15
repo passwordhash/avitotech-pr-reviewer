@@ -9,6 +9,8 @@ import (
 	httpapp "avitotech-pr-reviewer/internal/app/http"
 	"avitotech-pr-reviewer/internal/config"
 	teamService "avitotech-pr-reviewer/internal/service/team"
+	teamRepository "avitotech-pr-reviewer/internal/storage/postgres/team"
+	pgPkg "avitotech-pr-reviewer/pkg/postgres"
 )
 
 type App struct {
@@ -16,14 +18,18 @@ type App struct {
 }
 
 func New(
-	_ context.Context,
+	ctx context.Context,
 	lgr *slog.Logger,
 	cfg *config.Config,
 ) *App {
-	// pkgPool ...
+	pgPool, err := pgPkg.NewPool(ctx, cfg.PG.DSN(), pgPkg.WithMaxConns(cfg.PG.MaxConns))
+	if err != nil {
+		panic("failed to connect to postgres: " + err.Error())
+	}
 
-	// repos ...
-	teamSvc := teamService.New(lgr.WithGroup("team_service"))
+	teamRepo := teamRepository.New(pgPool)
+
+	teamSvc := teamService.New(lgr.WithGroup("team_service"), teamRepo)
 
 	srv := httpapp.New(
 		lgr.WithGroup("httpapp"),

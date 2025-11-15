@@ -1,7 +1,6 @@
 services:
     postgres:
         image: postgres:15
-        container_name: pr-review-postgres
         restart: always
         ports:
             - "${POSTGRES_PORT:-5432}:5432"
@@ -47,7 +46,6 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.dev
-        container_name: pr-review-app
         ports:
             - "8080:8080"
         env_file: .env.local

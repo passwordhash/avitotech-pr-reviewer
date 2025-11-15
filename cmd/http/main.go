@@ -1,14 +1,15 @@
 package main
 
 import (
-	"avitotech-pr-reviewer/internal/app"
-	"avitotech-pr-reviewer/internal/config"
 	"context"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"avitotech-pr-reviewer/internal/app"
+	"avitotech-pr-reviewer/internal/config"
 )
 
 const (
@@ -43,7 +44,8 @@ func main() {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
-	if err := application.Srv.Stop(shutdownCtx); err != nil {
+	err := application.Srv.Stop(shutdownCtx)
+	if err != nil {
 		lgr.Error("failed to stop http_server gracefully", "err", err)
 	} else {
 		lgr.Info("PR Reviewer application http_server stopped gracefully")

@@ -153,7 +153,8 @@ func (a *App) Stop(ctx context.Context) error {
 	server := a.server
 	a.mu.Unlock()
 
-	if err := server.Shutdown(ctx); err != nil {
+	err := server.Shutdown(ctx)
+	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 

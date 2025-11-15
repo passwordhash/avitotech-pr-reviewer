@@ -9,7 +9,7 @@ import (
 )
 
 type teamService interface {
-	CreateTeam(ctx context.Context, teamName string, members []domain.User) error
+	CreateTeam(ctx context.Context, teamName string, members []domain.User) (*domain.Team, error)
 }
 
 type handler struct {

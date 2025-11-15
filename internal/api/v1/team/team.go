@@ -16,12 +16,14 @@ func (h *handler) add(c *gin.Context) {
 		return
 	}
 
-	err = h.teamSvc.CreateTeam(c, req.TeamName, req.ToDomainMembers())
+	created, err := h.teamSvc.CreateTeam(c, req.TeamName, req.ToDomainMembers())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "team added"})
+	c.JSON(http.StatusOK, fromDomainTeam(created))
 }
 
 func (h *handler) get(c *gin.Context) {}

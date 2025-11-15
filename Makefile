@@ -1,10 +1,7 @@
-ifneq ("$(wildcard .env)", "")
-	include .env.local
-	include .env
-	export $(shell sed 's/=.*//' .env)
-endif
+ENV_FILE ?= .env.local
 
-POSTGRES_HOST = localhost
+.EXPORT_ALL_VARIABLES:
+include $(ENV_FILE)
 
 # ==========================
 # Локальная разработка / Тесты
@@ -27,7 +24,7 @@ migration-create:
 	migrate create -ext sql -dir migrations -seq $(name)
 
 migration-up:
-	migrate -path ./migrations -database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSL)" -verbose up
+	POSTGRES_HOST=localhost migrate -path ./migrations -database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSL)" -verbose up
 
 migration-down:
-	migrate -path ./migrations -database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSL)" -verbose down
+	POSTGRES_HOST=localhost migrate -path ./migrations -database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSL)" -verbose down

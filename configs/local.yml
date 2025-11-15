@@ -5,3 +5,6 @@ http:
     read_timeout: 5s
     write_timeout: 5s
     gateway_timeout: 5s
+
+postgres:
+    max_conns: 15

@@ -7,7 +7,12 @@ run:
 linters:
     default: all
     disable:
+        - wsl
+        - wsl_v5
         - depguard
+        - exhaustruct
+        - wrapcheck
+        - nosprintfhostport
         - tagliatelle
         - revive
         - tagalign
@@ -25,7 +30,6 @@ linters:
         - unconvert
         - copyloopvar
         - bodyclose
-        # - exhaustruct
         - prealloc
         - nakedret
         - noctx
@@ -41,7 +45,13 @@ linters:
         - makezero
         - containedctx
         - dogsled
+        - funlen
         - goheader
+
+    settings:
+        funlen:
+            lines: 80
+            statements: 80
 
 issues:
     max-issues-per-linter: 0
