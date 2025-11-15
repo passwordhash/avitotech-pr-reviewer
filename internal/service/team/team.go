@@ -11,24 +11,31 @@ import (
 	repoErr "avitotech-pr-reviewer/internal/storage/errors"
 )
 
-type TeamsRepository interface {
+type TeamRepository interface {
 	CreateWithMembers(ctx context.Context, teamName string, users []domain.User) (*domain.Team, error)
-	TeamWithMembers(ctx context.Context, teamName string) (*domain.TeamNormalized, error)
+	GetByName(ctx context.Context, teamName string) (*domain.Team, error)
+}
+
+type UserRepository interface {
+	ListByTeamID(ctx context.Context, teamID string) ([]domain.User, error)
 }
 
 type Service struct {
 	lgr *slog.Logger
 
-	teamsRepo TeamsRepository
+	teamsRepo TeamRepository
+	usersRepo UserRepository
 }
 
 func New(
 	lgr *slog.Logger,
-	reamsRepo TeamsRepository,
+	teamRepo TeamRepository,
+	userRepo UserRepository,
 ) *Service {
 	return &Service{
-		teamsRepo: reamsRepo,
 		lgr:       lgr,
+		teamsRepo: teamRepo,
+		usersRepo: userRepo,
 	}
 }
 
@@ -77,7 +84,27 @@ func (s *Service) TeamWithMembers(
 		slog.String("op", op),
 		slog.String("teamName", teamName),
 	)
-	_ = lgr
 
-	return nil, nil //nolint:nilnil
+	teamDB, err := s.teamsRepo.GetByName(ctx, teamName)
+	if errors.Is(err, repoErr.ErrTeamNotFound) {
+		lgr.DebugContext(ctx, "team not found")
+
+		return nil, svcErr.ErrTeamNotFound
+	}
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to get team by name", slog.Any("error", err))
+
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	members, err := s.usersRepo.ListByTeamID(ctx, teamDB.ID)
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to list team members", slog.Any("error", err))
+
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	teamDB.Members = members
+
+	return teamDB, nil
 }

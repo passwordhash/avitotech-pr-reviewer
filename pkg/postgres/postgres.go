@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-
 var ErrNewPool = errors.New("failed to create new pgx pool")
 
 type Option func(*pgxpool.Config)
@@ -58,6 +57,10 @@ type DB interface {
 
 type Batch = pgx.Batch
 
-// type Queryer interface {
-//	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
-//}
+func RowToStructByName[T any](row pgx.CollectableRow) (T, error) {
+	return pgx.RowToStructByName[T](row)
+}
+
+func CollectExactlyOneRow[T any](rows pgx.Rows, fn pgx.RowToFunc[T]) (T, error) {
+	return pgx.CollectExactlyOneRow[T](rows, fn)
+}

@@ -7,6 +7,7 @@ import (
 
 	"avitotech-pr-reviewer/internal/domain"
 	repoErr "avitotech-pr-reviewer/internal/storage/errors"
+	"avitotech-pr-reviewer/internal/storage/postgres/team/model"
 	pgPkg "avitotech-pr-reviewer/pkg/postgres"
 )
 
@@ -102,6 +103,28 @@ func (r *Repository) CreateWithMembers(
 	return &team, nil
 }
 
-func (r *Repository) TeamWithMembers(ctx context.Context, teamName string) (*domain.TeamNormalized, error) {
-	panic("implement me")
+// GetByName возвращает команду по ее имени.
+// Если команда с таким именем не найдена, возвращается ошибка repoErr.ErrTeamNotFound.
+func (r *Repository) GetByName(ctx context.Context, teamName string) (*domain.Team, error) {
+	const op = "repository.team.GetByName"
+
+	const getQuery = `
+		SELECT * FROM teams
+		WHERE team_name = $1
+	`
+	rows, err := r.db.Query(ctx, getQuery, teamName)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	teamDB, err := pgPkg.CollectExactlyOneRow(rows, pgPkg.RowToStructByName[model.Team])
+	if pgPkg.IsNoRowsError(err) {
+		return nil, repoErr.ErrTeamNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return teamDB.ToDomain(), nil
 }

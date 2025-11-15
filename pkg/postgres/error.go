@@ -3,6 +3,7 @@ package pgPkg
 import (
 	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -17,4 +18,8 @@ func IsUniqueViolationError(err error) bool {
 	}
 
 	return false
+}
+
+func IsNoRowsError(err error) bool {
+	return errors.Is(err, pgx.ErrNoRows)
 }

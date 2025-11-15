@@ -13,6 +13,7 @@ linters:
         - exhaustruct
         - wrapcheck
         - nlreturn
+        - ireturn
         - nosprintfhostport
         - tagliatelle
         - revive
