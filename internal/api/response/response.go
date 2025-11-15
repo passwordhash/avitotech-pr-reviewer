@@ -28,6 +28,10 @@ type Error struct {
 	Message string    `json:"message"`
 }
 
+func NewCreated(c *gin.Context, data any) {
+	c.JSON(http.StatusCreated, data)
+}
+
 func NewOK(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, data)
 }

@@ -39,8 +39,8 @@ func (_m *MockTeamRepository) EXPECT() *MockTeamRepository_Expecter {
 }
 
 // CreateWithMembers provides a mock function for the type MockTeamRepository
-func (_mock *MockTeamRepository) CreateWithMembers(ctx context.Context, teamName string, users []domain.User) (*domain.Team, error) {
-	ret := _mock.Called(ctx, teamName, users)
+func (_mock *MockTeamRepository) CreateWithMembers(ctx context.Context, teamName string, members []domain.Member) (*domain.Team, error) {
+	ret := _mock.Called(ctx, teamName, members)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateWithMembers")
@@ -48,18 +48,18 @@ func (_mock *MockTeamRepository) CreateWithMembers(ctx context.Context, teamName
 
 	var r0 *domain.Team
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []domain.User) (*domain.Team, error)); ok {
-		return returnFunc(ctx, teamName, users)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []domain.Member) (*domain.Team, error)); ok {
+		return returnFunc(ctx, teamName, members)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []domain.User) *domain.Team); ok {
-		r0 = returnFunc(ctx, teamName, users)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []domain.Member) *domain.Team); ok {
+		r0 = returnFunc(ctx, teamName, members)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Team)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []domain.User) error); ok {
-		r1 = returnFunc(ctx, teamName, users)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []domain.Member) error); ok {
+		r1 = returnFunc(ctx, teamName, members)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -74,12 +74,12 @@ type MockTeamRepository_CreateWithMembers_Call struct {
 // CreateWithMembers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - teamName string
-//   - users []domain.User
-func (_e *MockTeamRepository_Expecter) CreateWithMembers(ctx interface{}, teamName interface{}, users interface{}) *MockTeamRepository_CreateWithMembers_Call {
-	return &MockTeamRepository_CreateWithMembers_Call{Call: _e.mock.On("CreateWithMembers", ctx, teamName, users)}
+//   - members []domain.Member
+func (_e *MockTeamRepository_Expecter) CreateWithMembers(ctx interface{}, teamName interface{}, members interface{}) *MockTeamRepository_CreateWithMembers_Call {
+	return &MockTeamRepository_CreateWithMembers_Call{Call: _e.mock.On("CreateWithMembers", ctx, teamName, members)}
 }
 
-func (_c *MockTeamRepository_CreateWithMembers_Call) Run(run func(ctx context.Context, teamName string, users []domain.User)) *MockTeamRepository_CreateWithMembers_Call {
+func (_c *MockTeamRepository_CreateWithMembers_Call) Run(run func(ctx context.Context, teamName string, members []domain.Member)) *MockTeamRepository_CreateWithMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -89,9 +89,9 @@ func (_c *MockTeamRepository_CreateWithMembers_Call) Run(run func(ctx context.Co
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 []domain.User
+		var arg2 []domain.Member
 		if args[2] != nil {
-			arg2 = args[2].([]domain.User)
+			arg2 = args[2].([]domain.Member)
 		}
 		run(
 			arg0,
@@ -107,7 +107,7 @@ func (_c *MockTeamRepository_CreateWithMembers_Call) Return(team *domain.Team, e
 	return _c
 }
 
-func (_c *MockTeamRepository_CreateWithMembers_Call) RunAndReturn(run func(ctx context.Context, teamName string, users []domain.User) (*domain.Team, error)) *MockTeamRepository_CreateWithMembers_Call {
+func (_c *MockTeamRepository_CreateWithMembers_Call) RunAndReturn(run func(ctx context.Context, teamName string, members []domain.Member) (*domain.Team, error)) *MockTeamRepository_CreateWithMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -12,12 +12,12 @@ import (
 )
 
 type TeamRepository interface {
-	CreateWithMembers(ctx context.Context, teamName string, users []domain.User) (*domain.Team, error)
+	CreateWithMembers(ctx context.Context, teamName string, members []domain.Member) (*domain.Team, error)
 	GetByName(ctx context.Context, teamName string) (*domain.Team, error)
 }
 
 type UserRepository interface {
-	ListByTeamID(ctx context.Context, teamID string) ([]domain.User, error)
+	ListByTeamID(ctx context.Context, teamID string) ([]domain.Member, error)
 }
 
 type Service struct {
@@ -44,7 +44,7 @@ func New(
 func (s *Service) CreateTeam(
 	ctx context.Context,
 	teamName string,
-	members []domain.User,
+	members []domain.Member,
 ) (*domain.Team, error) {
 	const op = "team.CreateTeam"
 

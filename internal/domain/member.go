@@ -1,8 +1,7 @@
 package domain
 
-type User struct {
+type Member struct {
 	ID       string
 	Username string
 	IsActive bool
-	Team Team
 }

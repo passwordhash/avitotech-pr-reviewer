@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"avitotech-pr-reviewer/internal/domain"
+	repoErr "avitotech-pr-reviewer/internal/storage/errors"
 	"avitotech-pr-reviewer/internal/storage/postgres/user/model"
 	pgPkg "avitotech-pr-reviewer/pkg/postgres"
 )
@@ -19,17 +20,14 @@ func New(db pgPkg.DB) *Repository {
 	}
 }
 
-// ListByTeamID возвращает список пользователей по идентификатору команды.
+// ListByTeamID возвращает список участников по идентификатору команды.
 // Если команда не найдена или у команды нет участников, возвращается пустой слайс.
-func (r *Repository) ListByTeamID(
-	ctx context.Context,
-	teamID string,
-) ([]domain.User, error) {
+func (r *Repository) ListByTeamID(ctx context.Context, teamID string) ([]domain.Member, error) {
 	const op = "repository.team.ListByTeamID"
 
 	const listQuery = `
 		SELECT user_id, username, is_active, team_id
-		FROM users
+		FROM user
 		WHERE team_id = $1
 	`
 
@@ -39,13 +37,13 @@ func (r *Repository) ListByTeamID(
 	}
 	defer rows.Close()
 
-	var users []domain.User
+	var members []domain.Member
 	for rows.Next() {
-		usr, err := pgPkg.RowToStructByName[model.User](rows)
+		m, err := pgPkg.RowToStructByName[model.User](rows)
 		if err != nil {
 			return nil, fmt.Errorf("%s: map row: %w", op, err)
 		}
-		users = append(users, *usr.ToDomain())
+		members = append(members, *m.ToMemberDomain())
 	}
 
 	err = rows.Err()
@@ -53,5 +51,36 @@ func (r *Repository) ListByTeamID(
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return users, nil
+	return members, nil
+}
+
+// SetIsActive обновляет статус активности пользователя.
+func (r *Repository) SetIsActive(ctx context.Context, userID string, isActive bool) (*domain.User, error) {
+	const op = "repository.user.SetIsActive"
+
+	const updateQuery = `
+		UPDATE users
+		SET is_active = $1
+		WHERE user_id = $2
+		RETURNING user_id, username, is_active, team_id
+	`
+
+	rows, err := r.db.Query(ctx, updateQuery, isActive, userID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	userDB, err := pgPkg.RowToStructByName[model.User](rows)
+	if pgPkg.IsNoRowsError(err) {
+		return nil, fmt.Errorf("%s: %w", op, repoErr.ErrUserNotFound)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: map row: %w", op, err)
+	}
+
+	_ = userDB
+	panic("unreachable")
+
+	// return userDB.ToDomain(), nil
 }

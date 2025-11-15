@@ -30,7 +30,7 @@ func (h *handler) add(c *gin.Context) {
 		return
 	}
 
-	response.NewOK(c, fromDomainTeam(created))
+	response.NewCreated(c, fromDomainTeam(created))
 }
 
 func (h *handler) get(c *gin.Context) {
@@ -38,6 +38,8 @@ func (h *handler) get(c *gin.Context) {
 	if teamName == "" {
 		response.NewError(c, response.BadRequest, "team_name query parameter is required", nil)
 	}
+
+	//nolint:nolintlint,godox    // TODO: проверка amdmin токена
 
 	team, err := h.teamSvc.TeamWithMembers(c, teamName)
 	if errors.Is(err, svcErr.ErrTeamNotFound) {

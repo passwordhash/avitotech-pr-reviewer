@@ -39,23 +39,23 @@ func (_m *MockUserRepository) EXPECT() *MockUserRepository_Expecter {
 }
 
 // ListByTeamID provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) ListByTeamID(ctx context.Context, teamID string) ([]domain.User, error) {
+func (_mock *MockUserRepository) ListByTeamID(ctx context.Context, teamID string) ([]domain.Member, error) {
 	ret := _mock.Called(ctx, teamID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListByTeamID")
 	}
 
-	var r0 []domain.User
+	var r0 []domain.Member
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]domain.User, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]domain.Member, error)); ok {
 		return returnFunc(ctx, teamID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []domain.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []domain.Member); ok {
 		r0 = returnFunc(ctx, teamID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.User)
+			r0 = ret.Get(0).([]domain.Member)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -96,12 +96,12 @@ func (_c *MockUserRepository_ListByTeamID_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockUserRepository_ListByTeamID_Call) Return(users []domain.User, err error) *MockUserRepository_ListByTeamID_Call {
-	_c.Call.Return(users, err)
+func (_c *MockUserRepository_ListByTeamID_Call) Return(members []domain.Member, err error) *MockUserRepository_ListByTeamID_Call {
+	_c.Call.Return(members, err)
 	return _c
 }
 
-func (_c *MockUserRepository_ListByTeamID_Call) RunAndReturn(run func(ctx context.Context, teamID string) ([]domain.User, error)) *MockUserRepository_ListByTeamID_Call {
+func (_c *MockUserRepository_ListByTeamID_Call) RunAndReturn(run func(ctx context.Context, teamID string) ([]domain.Member, error)) *MockUserRepository_ListByTeamID_Call {
 	_c.Call.Return(run)
 	return _c
 }

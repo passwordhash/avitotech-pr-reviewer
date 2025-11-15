@@ -8,8 +8,8 @@ type userReq struct {
 	IsActive bool   `json:"is_active"`
 }
 
-func (u *userReq) ToDomain() domain.User {
-	return domain.User{
+func (u *userReq) ToDomain() domain.Member {
+	return domain.Member{
 		ID:       u.UserID,
 		Username: u.Username,
 		IsActive: u.IsActive,
@@ -21,8 +21,8 @@ type addReq struct {
 	Members  []userReq `json:"members"`
 }
 
-func (a *addReq) ToDomainMembers() []domain.User {
-	domainMembers := make([]domain.User, len(a.Members))
+func (a *addReq) ToDomainMembers() []domain.Member {
+	domainMembers := make([]domain.Member, len(a.Members))
 	for i, member := range a.Members {
 		domainMembers[i] = member.ToDomain()
 	}
@@ -36,11 +36,19 @@ type userResp struct {
 	IsActive bool   `json:"is_active"`
 }
 
-func fromDomainUser(u domain.User) userResp {
+// func fromDomainUser(u domain.User) userResp {
+//	return userResp{
+//		UserID:   u.ID,
+//		Username: u.Username,
+//		IsActive: u.IsActive,
+//	}
+// }
+
+func fromDomainMember(m domain.Member) userResp {
 	return userResp{
-		UserID:   u.ID,
-		Username: u.Username,
-		IsActive: u.IsActive,
+		UserID:   m.ID,
+		Username: m.Username,
+		IsActive: m.IsActive,
 	}
 }
 
@@ -52,7 +60,7 @@ type addResp struct {
 func fromDomainTeam(t *domain.Team) addResp {
 	members := make([]userResp, len(t.Members))
 	for i, member := range t.Members {
-		members[i] = fromDomainUser(member)
+		members[i] = fromDomainMember(member)
 	}
 
 	return addResp{

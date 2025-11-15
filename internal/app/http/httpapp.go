@@ -13,8 +13,9 @@ import (
 
 	"avitotech-pr-reviewer/internal/api/middleware"
 	teamHandler "avitotech-pr-reviewer/internal/api/routes/team"
-	usersHandler "avitotech-pr-reviewer/internal/api/routes/users"
+	usersHandler "avitotech-pr-reviewer/internal/api/routes/user"
 	teamService "avitotech-pr-reviewer/internal/service/team"
+	userService "avitotech-pr-reviewer/internal/service/user"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,6 +31,7 @@ type App struct {
 	lgr *slog.Logger
 
 	teamSvc *teamService.Service
+	userSvc *userService.Service
 
 	port           int
 	readTimeout    time.Duration
@@ -75,11 +77,13 @@ func WithRequestTimeout(timeout time.Duration) Option {
 func New(
 	lgr *slog.Logger,
 	teamSvc *teamService.Service,
+	userSvc *userService.Service,
 	opts ...Option,
 ) *App {
 	app := &App{
 		lgr:            lgr,
 		teamSvc:        teamSvc,
+		userSvc:        userSvc,
 		readTimeout:    srvReadTimeoutDefault,
 		writeTimeout:   srvWriteTimeoutDefault,
 		requestTimeout: srvGatewayTimeoutDefault,
@@ -112,7 +116,7 @@ func (a *App) Run(ctx context.Context) error {
 	lgr.InfoContext(ctx, "starting HTTP http_server")
 
 	teamHlr := teamHandler.New(a.teamSvc)
-	usersHlr := usersHandler.New()
+	usersHlr := usersHandler.New(a.userSvc)
 
 	app := gin.New()
 	app.Use(gin.Recovery())

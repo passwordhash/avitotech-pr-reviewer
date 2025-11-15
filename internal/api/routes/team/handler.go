@@ -9,7 +9,7 @@ import (
 )
 
 type teamService interface {
-	CreateTeam(ctx context.Context, teamName string, members []domain.User) (*domain.Team, error)
+	CreateTeam(ctx context.Context, teamName string, members []domain.Member) (*domain.Team, error)
 	TeamWithMembers(ctx context.Context, teamName string) (*domain.Team, error)
 }
 

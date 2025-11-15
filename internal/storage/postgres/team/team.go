@@ -29,7 +29,7 @@ func New(db pgPkg.DB) *Repository {
 func (r *Repository) CreateWithMembers(
 	ctx context.Context,
 	teamName string,
-	users []domain.User,
+	members []domain.Member,
 ) (*domain.Team, error) {
 	const op = "repository.team.CreateWithMembers"
 
@@ -57,7 +57,7 @@ func (r *Repository) CreateWithMembers(
 	}
 
 	const createTeamMemberQuery = `
-		INSERT INTO users (user_id, username, is_active, team_id)
+		INSERT INTO user (user_id, username, is_active, team_id)
 			VALUES ($1, $2, $3, $4)
             ON CONFLICT (user_id)
             DO UPDATE SET
@@ -66,11 +66,11 @@ func (r *Repository) CreateWithMembers(
                 team_id = EXCLUDED.team_id
 	`
 	batch := &pgPkg.Batch{}
-	for _, user := range users {
+	for _, member := range members {
 		batch.Queue(createTeamMemberQuery,
-			user.ID,
-			user.Username,
-			user.IsActive,
+			member.ID,
+			member.Username,
+			member.IsActive,
 			team.ID)
 	}
 	batchResults := tx.SendBatch(ctx, batch)
@@ -78,7 +78,7 @@ func (r *Repository) CreateWithMembers(
 		_ = batchResults.Close()
 	}()
 
-	for range users {
+	for range members {
 		_, execErr := batchResults.Exec()
 		if execErr != nil {
 			e := batchResults.Close()
@@ -98,7 +98,7 @@ func (r *Repository) CreateWithMembers(
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	team.Members = users
+	team.Members = members
 
 	return &team, nil
 }
@@ -113,6 +113,32 @@ func (r *Repository) GetByName(ctx context.Context, teamName string) (*domain.Te
 		WHERE team_name = $1
 	`
 	rows, err := r.db.Query(ctx, getQuery, teamName)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	teamDB, err := pgPkg.CollectExactlyOneRow(rows, pgPkg.RowToStructByName[model.Team])
+	if pgPkg.IsNoRowsError(err) {
+		return nil, repoErr.ErrTeamNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return teamDB.ToDomain(), nil
+}
+
+// GetByID возвращает команду по ее идентификатору.
+// Если команда с таким идентификатором не найдена, возвращается ошибка repoErr.ErrTeamNotFound.
+func (r *Repository) GetByID(ctx context.Context, teamID string) (*domain.Team, error) {
+	const op = "repository.team.GetByID"
+
+	const getQuery = `
+		SELECT * FROM teams
+		WHERE team_id = $1
+	`
+	rows, err := r.db.Query(ctx, getQuery, teamID)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

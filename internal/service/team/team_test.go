@@ -36,7 +36,7 @@ func TestService_TeamWithMembers(t *testing.T) { //nolint:funlen
 				}, nil)
 
 				m2.On("ListByTeamID", mock.Anything, "team-001").
-					Return([]domain.User{
+					Return([]domain.Member{
 						{ID: "u1", Username: "Charlie", IsActive: true},
 						{ID: "u2", Username: "Dana", IsActive: true},
 					}, nil)
@@ -44,7 +44,7 @@ func TestService_TeamWithMembers(t *testing.T) { //nolint:funlen
 			expectedTeam: &domain.Team{
 				ID:   "team-001",
 				Name: "devops",
-				Members: []domain.User{
+				Members: []domain.Member{
 					{ID: "u1", Username: "Charlie", IsActive: true},
 					{ID: "u2", Username: "Dana", IsActive: true},
 				},
@@ -71,12 +71,12 @@ func TestService_TeamWithMembers(t *testing.T) { //nolint:funlen
 				}, nil)
 
 				m2.On("ListByTeamID", mock.Anything, "team-002").
-					Return([]domain.User{}, nil)
+					Return([]domain.Member{}, nil)
 			},
 			expectedTeam: &domain.Team{
 				ID:      "team-002",
 				Name:    "qa",
-				Members: []domain.User{},
+				Members: []domain.Member{},
 			},
 			expectedError: nil,
 		},
@@ -130,7 +130,7 @@ func TestService_CreateTeam(t *testing.T) { //nolint:funlen
 	tests := []struct {
 		name          string
 		teamName      string
-		members       []domain.User
+		members       []domain.Member
 		setupMock     func(m *mocks.MockTeamRepository)
 		expectedTeam  *domain.Team
 		expectedError error
@@ -138,7 +138,7 @@ func TestService_CreateTeam(t *testing.T) { //nolint:funlen
 		{
 			name:     "success - team created with members",
 			teamName: "backend",
-			members: []domain.User{
+			members: []domain.Member{
 				{ID: "u1", Username: "Alice", IsActive: true},
 				{ID: "u2", Username: "Bob", IsActive: true},
 			},
@@ -146,7 +146,7 @@ func TestService_CreateTeam(t *testing.T) { //nolint:funlen
 				expectedTeam := &domain.Team{
 					ID:   "team-123",
 					Name: "backend",
-					Members: []domain.User{
+					Members: []domain.Member{
 						{ID: "u1", Username: "Alice", IsActive: true},
 						{ID: "u2", Username: "Bob", IsActive: true},
 					},
@@ -157,7 +157,7 @@ func TestService_CreateTeam(t *testing.T) { //nolint:funlen
 			expectedTeam: &domain.Team{
 				ID:   "team-123",
 				Name: "backend",
-				Members: []domain.User{
+				Members: []domain.Member{
 					{ID: "u1", Username: "Alice", IsActive: true},
 					{ID: "u2", Username: "Bob", IsActive: true},
 				},
@@ -167,7 +167,7 @@ func TestService_CreateTeam(t *testing.T) { //nolint:funlen
 		{
 			name:     "error - team already exists",
 			teamName: "existing-team",
-			members: []domain.User{
+			members: []domain.Member{
 				{ID: "u1", Username: "Alice", IsActive: true},
 			},
 			setupMock: func(m *mocks.MockTeamRepository) {
@@ -180,12 +180,12 @@ func TestService_CreateTeam(t *testing.T) { //nolint:funlen
 		{
 			name:     "success - team created with empty members",
 			teamName: "empty-team",
-			members:  []domain.User{},
+			members:  []domain.Member{},
 			setupMock: func(m *mocks.MockTeamRepository) {
 				expectedTeam := &domain.Team{
 					ID:      "team-456",
 					Name:    "empty-team",
-					Members: []domain.User{},
+					Members: []domain.Member{},
 				}
 				m.On("CreateWithMembers", mock.Anything, "empty-team", mock.Anything).
 					Return(expectedTeam, nil)
@@ -193,14 +193,14 @@ func TestService_CreateTeam(t *testing.T) { //nolint:funlen
 			expectedTeam: &domain.Team{
 				ID:      "team-456",
 				Name:    "empty-team",
-				Members: []domain.User{},
+				Members: []domain.Member{},
 			},
 			expectedError: nil,
 		},
 		{
 			name:     "success - team with inactive members",
 			teamName: "mixed-team",
-			members: []domain.User{
+			members: []domain.Member{
 				{ID: "u1", Username: "Alice", IsActive: true},
 				{ID: "u2", Username: "Bob", IsActive: false},
 			},
@@ -208,7 +208,7 @@ func TestService_CreateTeam(t *testing.T) { //nolint:funlen
 				expectedTeam := &domain.Team{
 					ID:   "team-789",
 					Name: "mixed-team",
-					Members: []domain.User{
+					Members: []domain.Member{
 						{ID: "u1", Username: "Alice", IsActive: true},
 						{ID: "u2", Username: "Bob", IsActive: false},
 					},
@@ -219,7 +219,7 @@ func TestService_CreateTeam(t *testing.T) { //nolint:funlen
 			expectedTeam: &domain.Team{
 				ID:   "team-789",
 				Name: "mixed-team",
-				Members: []domain.User{
+				Members: []domain.Member{
 					{ID: "u1", Username: "Alice", IsActive: true},
 					{ID: "u2", Username: "Bob", IsActive: false},
 				},
