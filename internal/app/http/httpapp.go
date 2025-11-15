@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	teamHandler "avitotech-pr-reviewer/internal/api/v1/team"
-	usersHandler "avitotech-pr-reviewer/internal/api/v1/users"
+	teamHandler "avitotech-pr-reviewer/internal/api/team"
+	usersHandler "avitotech-pr-reviewer/internal/api/users"
 	teamService "avitotech-pr-reviewer/internal/service/team"
 
 	"github.com/gin-gonic/gin"
@@ -120,11 +120,10 @@ func (a *App) Run(ctx context.Context) error {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	api := app.Group("/api")
-	v1 := api.Group("/v1")
+	base := app.Group("/")
 
-	teamHlr.RegisterRoutes(v1)
-	usersHlr.RegisterRoutes(v1)
+	teamHlr.RegisterRoutes(base)
+	usersHlr.RegisterRoutes(base)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", a.port),

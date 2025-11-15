@@ -12,6 +12,7 @@ linters:
         - depguard
         - exhaustruct
         - wrapcheck
+        - nlreturn
         - nosprintfhostport
         - tagliatelle
         - revive

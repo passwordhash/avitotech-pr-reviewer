@@ -45,8 +45,8 @@ func fromDomainUser(u domain.User) userResp {
 }
 
 type addResp struct {
-	TeamName string `json:"team_name"`
-	Members []userResp `json:"members"`
+	TeamName string     `json:"team_name"`
+	Members  []userResp `json:"members"`
 }
 
 func fromDomainTeam(t *domain.Team) addResp {
