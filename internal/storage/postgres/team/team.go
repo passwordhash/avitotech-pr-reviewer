@@ -101,3 +101,7 @@ func (r *Repository) CreateWithMembers(
 
 	return &team, nil
 }
+
+func (r *Repository) TeamWithMembers(ctx context.Context, teamName string) (*domain.TeamNormalized, error) {
+	panic("implement me")
+}

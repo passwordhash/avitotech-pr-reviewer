@@ -13,12 +13,13 @@ import (
 
 type TeamsRepository interface {
 	CreateWithMembers(ctx context.Context, teamName string, users []domain.User) (*domain.Team, error)
+	TeamWithMembers(ctx context.Context, teamName string) (*domain.TeamNormalized, error)
 }
 
 type Service struct {
 	lgr *slog.Logger
 
-	reamsRepo TeamsRepository
+	teamsRepo TeamsRepository
 }
 
 func New(
@@ -26,7 +27,7 @@ func New(
 	reamsRepo TeamsRepository,
 ) *Service {
 	return &Service{
-		reamsRepo: reamsRepo,
+		teamsRepo: reamsRepo,
 		lgr:       lgr,
 	}
 }
@@ -40,23 +41,43 @@ func (s *Service) CreateTeam(
 ) (*domain.Team, error) {
 	const op = "team.CreateTeam"
 
-	lgr := s.lgr.With("op", op, "teamName", teamName)
+	lgr := s.lgr.With(
+		slog.String("op", op),
+		slog.String("teamName", teamName),
+	)
 
-	createdTeam, err := s.reamsRepo.CreateWithMembers(ctx, teamName, members)
+	createdTeam, err := s.teamsRepo.CreateWithMembers(ctx, teamName, members)
 	if errors.Is(err, repoErr.ErrTeamExists) {
 		lgr.DebugContext(ctx, "team already exists")
 
 		return nil, svcErr.ErrTeamExists
 	}
 	if err != nil {
-		lgr.ErrorContext(ctx, "failed to create team with members", "err", err)
+		lgr.ErrorContext(ctx, "failed to create team with members", slog.Any("error", err))
 
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	lgr.InfoContext(ctx, "team with members created successfully",
 		slog.String("teamID", createdTeam.ID),
-		slog.Int("membersCount", len(createdTeam.Members)))
+		slog.Int("membersCount", len(createdTeam.Members)),
+	)
 
 	return createdTeam, nil
+}
+
+// TeamWithMembers возвращает команду с указанным именем вместе с ее участниками.
+func (s *Service) TeamWithMembers(
+	ctx context.Context,
+	teamName string,
+) (*domain.Team, error) {
+	const op = "team.TeamWithMembers"
+
+	lgr := s.lgr.With(
+		slog.String("op", op),
+		slog.String("teamName", teamName),
+	)
+	_ = lgr
+
+	return nil, nil //nolint:nilnil
 }

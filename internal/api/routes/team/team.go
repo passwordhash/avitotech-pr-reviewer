@@ -9,6 +9,8 @@ import (
 	svcErr "avitotech-pr-reviewer/internal/service/errors"
 )
 
+const teamNameQueryP = "team_name"
+
 func (h *handler) add(c *gin.Context) {
 	var req addReq
 
@@ -31,4 +33,21 @@ func (h *handler) add(c *gin.Context) {
 	response.NewOK(c, fromDomainTeam(created))
 }
 
-func (h *handler) get(c *gin.Context) {}
+func (h *handler) get(c *gin.Context) {
+	teamName := c.Query(teamNameQueryP)
+	if teamName == "" {
+		response.NewError(c, response.BadRequest, "team_name query parameter is required", nil)
+	}
+
+	team, err := h.teamSvc.TeamWithMembers(c, teamName)
+	if errors.Is(err, svcErr.ErrTeamNotFound) {
+		response.NewError(c, response.NotFound, "team not found", err)
+		return
+	}
+	if err != nil {
+		response.NewError(c, response.InternalError, "could not retrieve team", err)
+		return
+	}
+
+	response.NewOK(c, fromDomainTeam(team))
+}
