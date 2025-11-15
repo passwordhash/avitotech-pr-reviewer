@@ -11,8 +11,9 @@ import (
 	"sync"
 	"time"
 
-	teamHandler "avitotech-pr-reviewer/internal/api/team"
-	usersHandler "avitotech-pr-reviewer/internal/api/users"
+	"avitotech-pr-reviewer/internal/api/middleware"
+	teamHandler "avitotech-pr-reviewer/internal/api/routes/team"
+	usersHandler "avitotech-pr-reviewer/internal/api/routes/users"
 	teamService "avitotech-pr-reviewer/internal/service/team"
 
 	"github.com/gin-gonic/gin"
@@ -115,6 +116,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	app := gin.New()
 	app.Use(gin.Recovery())
+	app.Use(middleware.Logger(lgr))
 
 	app.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})

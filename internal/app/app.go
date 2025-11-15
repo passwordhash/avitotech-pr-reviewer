@@ -29,10 +29,10 @@ func New(
 
 	teamRepo := teamRepository.New(pgPool)
 
-	teamSvc := teamService.New(lgr.WithGroup("team_service"), teamRepo)
+	teamSvc := teamService.New(lgr.WithGroup("service.team"), teamRepo)
 
 	srv := httpapp.New(
-		lgr.WithGroup("httpapp"),
+		lgr,
 		teamSvc,
 		httpapp.WithPort(cfg.HTTP.Port),
 		httpapp.WithReadTimeout(cfg.HTTP.ReadTimeout),

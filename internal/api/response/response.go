@@ -32,14 +32,13 @@ func NewOK(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, data)
 }
 
-// NewErrorResponse создает и отправляет JSON-ответ с ошибкой.
-func NewErrorResponse(
+// NewError создает и отправляет JSON-ответ с ошибкой.
+func NewError(
 	c *gin.Context,
 	code ErrorCode,
 	message string,
 	err error,
 ) {
-	//nolint:nolintlint,godox    // TODO: log the error details	var status int
 	var status int
 
 	switch code { //nolint:exhaustive
@@ -51,6 +50,10 @@ func NewErrorResponse(
 		status = http.StatusBadRequest
 	default:
 		status = http.StatusInternalServerError
+	}
+
+	if err != nil {
+		_ = c.Error(err)
 	}
 
 	c.JSON(status, ErrorResponse{
