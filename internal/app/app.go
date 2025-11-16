@@ -33,7 +33,7 @@ func New(
 	userRepo := userRepository.New(pgPool)
 
 	teamSvc := teamService.New(lgr.WithGroup("service.team"), teamRepo, userRepo)
-	userSvc := userService.New(lgr.WithGroup("service.user"), userRepo, teamRepo)
+	userSvc := userService.New(lgr.WithGroup("service.user"), userRepo, teamRepo, cfg.AdminToken)
 
 	srv := httpapp.New(
 		lgr,

@@ -24,22 +24,26 @@ type Service struct {
 
 	userRepo UserRepository
 	teamRepo TeamRepository
+
+	adminToken string // Допущение: см. README.md
 }
 
 func New(
 	lgr *slog.Logger,
 	userRepo UserRepository,
 	teamRepo TeamRepository,
+	adminToken string,
 ) *Service {
 	return &Service{
-		lgr:      lgr,
-		userRepo: userRepo,
-		teamRepo: teamRepo,
+		lgr:        lgr,
+		userRepo:   userRepo,
+		teamRepo:   teamRepo,
+		adminToken: adminToken,
 	}
 }
 
 // SetIsActive ...
-func (s Service) SetIsActive(ctx context.Context, userID string, isActive bool) (*domain.User, error) {
+func (s *Service) SetIsActive(ctx context.Context, userID string, isActive bool) (*domain.User, error) {
 	const op = "user.SetIsActive"
 
 	lgr := s.lgr.With(
@@ -78,4 +82,23 @@ func (s Service) SetIsActive(ctx context.Context, userID string, isActive bool) 
 	userItem.TeamName = teamItem.Name
 
 	return userItem, nil
+}
+
+// VerifyAdminAccess проверяет наличие прав администратора по переданному токену.
+func (s *Service) VerifyAdminAccess(ctx context.Context, adminToken string) (bool, error) {
+	const op = "user.VerifyAdminAccess"
+
+	lgr := s.lgr.With(
+		slog.String("op", op),
+	)
+
+	if adminToken != s.adminToken {
+		lgr.DebugContext(ctx, "admin token is invalid")
+
+		return false, nil
+	}
+
+	lgr.DebugContext(ctx, "admin access granted")
+
+	return true, nil
 }

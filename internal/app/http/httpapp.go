@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"avitotech-pr-reviewer/internal/api/middleware"
-	teamHandler "avitotech-pr-reviewer/internal/api/routes/team"
-	usersHandler "avitotech-pr-reviewer/internal/api/routes/user"
+	teamHandler "avitotech-pr-reviewer/internal/api/v1/team"
+	usersHandler "avitotech-pr-reviewer/internal/api/v1/user"
 	teamService "avitotech-pr-reviewer/internal/service/team"
 	userService "avitotech-pr-reviewer/internal/service/user"
 
@@ -115,7 +115,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	lgr.InfoContext(ctx, "starting HTTP http_server")
 
-	teamHlr := teamHandler.New(a.teamSvc)
+	teamHlr := teamHandler.New(a.teamSvc, a.userSvc)
 	usersHlr := usersHandler.New(a.userSvc)
 
 	app := gin.New()

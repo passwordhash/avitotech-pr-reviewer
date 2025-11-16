@@ -12,10 +12,9 @@ const (
 	TeamExists    ErrorCode = "TEAM_EXISTS"
 	PrExists      ErrorCode = "PR_EXISTS"
 	PrMerged      ErrorCode = "PR_MERGED"
-	NotAssigned   ErrorCode = "NOT_ASSIGNED"
-	NoCandidate   ErrorCode = "NO_CANDIDATE"
 	NotFound      ErrorCode = "NOT_FOUND"
 	BadRequest    ErrorCode = "BAD_REQUEST"
+	Unauthorized  ErrorCode = "UNAUTHORIZED"
 	InternalError ErrorCode = "INTERNAL_ERROR"
 )
 
@@ -52,6 +51,8 @@ func NewError(
 		status = http.StatusNotFound
 	case BadRequest:
 		status = http.StatusBadRequest
+	case Unauthorized:
+		status = http.StatusUnauthorized
 	default:
 		status = http.StatusInternalServerError
 	}
@@ -60,7 +61,7 @@ func NewError(
 		_ = c.Error(err)
 	}
 
-	c.JSON(status, ErrorResponse{
+	c.AbortWithStatusJSON(status, ErrorResponse{
 		Error: Error{
 			Code:    code,
 			Message: message,

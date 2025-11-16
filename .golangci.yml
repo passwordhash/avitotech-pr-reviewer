@@ -11,6 +11,7 @@ linters:
     default: all
     disable:
         - wsl
+        - contextcheck
         - wsl_v5
         - depguard
         - exhaustruct
