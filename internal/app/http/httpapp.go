@@ -116,7 +116,7 @@ func (a *App) Run(ctx context.Context) error {
 	lgr.InfoContext(ctx, "starting HTTP http_server")
 
 	teamHlr := teamHandler.New(a.teamSvc, a.userSvc)
-	usersHlr := usersHandler.New(a.userSvc)
+	usersHlr := usersHandler.New(a.userSvc, a.userSvc)
 
 	app := gin.New()
 	app.Use(gin.Recovery())
