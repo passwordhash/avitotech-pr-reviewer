@@ -2,12 +2,30 @@ version: "2"
 run:
     tests: true
     concurrency: 4
-    timeout: 5m
+    # timeout: 5m
 
 linters:
+    exclusions:
+        paths:
+            - tests/
     default: all
-    enable:
+    disable:
+        - wsl
+        - contextcheck
+        - wsl_v5
+        - depguard
+        - exhaustruct
+        - paralleltest
+        - testpackage
+        - wrapcheck
+        - nlreturn
+        - ireturn
+        - nosprintfhostport
+        - tagliatelle
         - revive
+        - tagalign
+        - varnamelen
+    enable:
         - errcheck
         - unparam
         - dupl
@@ -20,7 +38,6 @@ linters:
         - unconvert
         - copyloopvar
         - bodyclose
-        - exhaustruct
         - prealloc
         - nakedret
         - noctx
@@ -36,8 +53,13 @@ linters:
         - makezero
         - containedctx
         - dogsled
-        - tagliatelle
+        - funlen
         - goheader
+
+    settings:
+        funlen:
+            lines: 80
+            statements: 80
 
 issues:
     max-issues-per-linter: 0

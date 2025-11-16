@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"time"
 
@@ -15,8 +16,15 @@ const (
 )
 
 type Config struct {
-	Env  string     `yaml:"env" env:"APP_ENV" env-required:"true"`
-	HTTP HTTPConfig `yaml:"http" env-required:"true"`
+	App 	   AppConfig  `yaml:"app" env-required:"true"`
+	HTTP       HTTPConfig `yaml:"http" env-required:"true"`
+	PG         PGConfig   `yaml:"postgres" env-required:"true"`
+}
+
+type AppConfig struct {
+	Env        string `yaml:"env" env:"APP_ENV" env-required:"true"`
+	AdminToken string `env:"ADMIN_TOKEN" env-required:"true"`
+	MaxReviewersPerPR int    `yaml:"max_reviewers_per_pr" env:"REVIEWERS_PER_PR" env-required:"true"`
 }
 
 type HTTPConfig struct {
@@ -24,6 +32,28 @@ type HTTPConfig struct {
 	ReadTimeout    time.Duration `yaml:"read_timeout" env:"HTTP_READ_TIMEOUT" env-required:"true"`
 	WriteTimeout   time.Duration `yaml:"write_timeout" env:"HTTP_WRITE_TIMEOUT" env-required:"true"`
 	GatewayTimeout time.Duration `yaml:"gateway_timeout" env:"HTTP_GATEWAY_TIMEOUT" env-required:"true"`
+}
+
+type PGConfig struct {
+	Host     string `env:"POSTGRES_HOST" yaml:"host" env-required:"true"`
+	Port     int    `env:"POSTGRES_PORT" yaml:"port" env-required:"true"`
+	Username string `env:"POSTGRES_USER" yaml:"user" env-required:"true"`
+	Password string `env:"POSTGRES_PASSWORD" yaml:"password" env-required:"true"`
+	Database string `env:"POSTGRES_DB" yaml:"database" env-required:"true"`
+	SSLMode  string `env:"POSTGRES_SSLMODE" yaml:"sslmode" env-default:"disable"`
+
+	MaxConns int32 `env:"POSTGRES_MAX_CONNS" yaml:"max_conns"`
+}
+
+func (p PGConfig) DSN() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		p.Username,
+		p.Password,
+		p.Host,
+		p.Port,
+		p.Database,
+		p.SSLMode,
+	)
 }
 
 // MustLoad загружает конфигурацию из файла и переменных окружения.
@@ -49,10 +79,13 @@ func MustLoadByPath(configPath string) *Config {
 
 	var cfg Config
 
-	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
+	err = cleanenv.ReadConfig(configPath, &cfg)
+	if err != nil {
 		panic("failed to load config: " + err.Error())
 	}
-	if err := cleanenv.ReadEnv(&cfg); err != nil {
+
+	err = cleanenv.ReadEnv(&cfg)
+	if err != nil {
 		panic("failed to load environment variables: " + err.Error())
 	}
 

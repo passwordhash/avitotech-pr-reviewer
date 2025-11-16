@@ -1,0 +1,44 @@
+services:
+    postgres-test:
+        image: postgres:15
+        restart: always
+        ports:
+            - "5433:5432"
+        environment:
+            POSTGRES_DB: "test_db"
+            POSTGRES_USER: "test_user"
+            POSTGRES_PASSWORD: "test_password"
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U test_user" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    migrate-test:
+        image: migrate/migrate:v4.18.1
+        entrypoint:
+            [
+                "sh",
+                "-c",
+                "sleep 5 && migrate -path /migrations -database postgres://test_user:test_password@postgres-test:5432/test_db?sslmode=disable up",
+            ]
+        depends_on:
+            postgres-test:
+                condition: service_healthy
+        volumes:
+            - ./migrations:/migrations
+
+    app-test:
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        ports:
+               - "${HTTP_PORT:-8081}:8080"
+        environment:
+            CONFIG_PATH: /app/configs/e2e.yml
+        volumes:
+            -  ./configs/e2e.yml:/app/configs/e2e.yml:ro
+        depends_on:
+            - migrate-test
+            - postgres-test
+        restart: unless-stopped

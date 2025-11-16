@@ -1,4 +1,5 @@
-// TODO: docs
+// Package httpapp реализует HTTP сервер с возможностью настройки параметров
+// через func options. Сервер использует фреймворк Gin для обработки HTTP запросов.
 package httpapp
 
 import (
@@ -7,7 +8,16 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
+
+	"avitotech-pr-reviewer/internal/api/middleware"
+	prHandler "avitotech-pr-reviewer/internal/api/v1/pullrequest"
+	teamHandler "avitotech-pr-reviewer/internal/api/v1/team"
+	userHandler "avitotech-pr-reviewer/internal/api/v1/user"
+	prService "avitotech-pr-reviewer/internal/service/pullrequest"
+	teamService "avitotech-pr-reviewer/internal/service/team"
+	userService "avitotech-pr-reviewer/internal/service/user"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,11 +32,16 @@ const (
 type App struct {
 	lgr *slog.Logger
 
+	teamSvc *teamService.Service
+	userSvc *userService.Service
+	prSvc   *prService.Service
+
 	port           int
 	readTimeout    time.Duration
 	writeTimeout   time.Duration
 	requestTimeout time.Duration
 
+	mu     sync.Mutex
 	server *http.Server
 }
 
@@ -61,9 +76,23 @@ func WithRequestTimeout(timeout time.Duration) Option {
 	}
 }
 
-func New(lgr *slog.Logger, opts ...Option) *App {
+// New создает новый экземпляр HTTP сервера с заданными опциями.
+func New(
+	lgr *slog.Logger,
+	teamSvc *teamService.Service,
+	userSvc *userService.Service,
+	prService *prService.Service,
+	opts ...Option,
+) *App {
 	app := &App{
-		lgr: lgr,
+		lgr:     lgr,
+		teamSvc: teamSvc,
+		userSvc: userSvc,
+		prSvc:   prService,
+
+		readTimeout:    srvReadTimeoutDefault,
+		writeTimeout:   srvWriteTimeoutDefault,
+		requestTimeout: srvGatewayTimeoutDefault,
 	}
 
 	for _, opt := range opts {
@@ -73,6 +102,7 @@ func New(lgr *slog.Logger, opts ...Option) *App {
 	return app
 }
 
+// MustRun запускает HTTP сервер и паникует в случае ошибки.
 func (a *App) MustRun(ctx context.Context) {
 	err := a.Run(ctx)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -80,6 +110,7 @@ func (a *App) MustRun(ctx context.Context) {
 	}
 }
 
+// Run запускает HTTP сервер.
 func (a *App) Run(ctx context.Context) error {
 	const op = "httpapp.Run"
 
@@ -90,16 +121,23 @@ func (a *App) Run(ctx context.Context) error {
 
 	lgr.InfoContext(ctx, "starting HTTP http_server")
 
-	// инициализация хендлеров ...
+	teamHlr := teamHandler.New(a.teamSvc, a.userSvc)
+	usersHlr := userHandler.New(a.userSvc, a.userSvc)
+	prHlr := prHandler.New(a.userSvc, a.prSvc)
 
 	app := gin.New()
 	app.Use(gin.Recovery())
-
-	// регистрация маршрутов ...
+	app.Use(middleware.Logger(lgr))
 
 	app.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
+
+	base := app.Group("/")
+
+	teamHlr.RegisterRoutes(base)
+	usersHlr.RegisterRoutes(base)
+	prHlr.RegisterRoutes(base)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", a.port),
@@ -111,4 +149,27 @@ func (a *App) Run(ctx context.Context) error {
 	a.server = srv
 
 	return srv.ListenAndServe()
+}
+
+// Stop останавливает HTTP сервер.
+// Нужно дожидаться завершения работы этого метода.
+// Контекст должен быть с тайм-аутом, чтобы избежать
+// зависания в случае проблем с остановкой сервера.
+func (a *App) Stop(ctx context.Context) error {
+	const op = "httpapp.Stop"
+
+	lgr := a.lgr.With("op", op)
+
+	lgr.Info("stopping HTTP http_server")
+
+	a.mu.Lock()
+	server := a.server
+	a.mu.Unlock()
+
+	err := server.Shutdown(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }
