@@ -274,7 +274,7 @@ func (s *Service) chooseNewReviewer(
 	}
 
 	if len(candidates) == 0 {
-		lgr.DebugContext(ctx, "no available candidates for reassignment")
+		lgr.InfoContext(ctx, "no available candidates for reassignment")
 		return "", svcErr.ErrPRNoCandidates
 	}
 

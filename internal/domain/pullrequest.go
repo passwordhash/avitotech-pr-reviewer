@@ -5,8 +5,8 @@ import "time"
 type PRStatus string
 
 const (
-	PRStatusOpen   PRStatus = "open"
-	PRStatusMerged PRStatus = "merged"
+	PRStatusOpen   PRStatus = "OPEN"
+	PRStatusMerged PRStatus = "MERGED"
 )
 
 func (s PRStatus) IsValid() bool {
