@@ -7,11 +7,16 @@ pkgname: mocks
 template: testify
 
 packages:
-    avitotech-pr-reviewer/internal/service/team:
-        interfaces:
-            TeamRepository:
-            UserRepository:
-    avitotech-pr-reviewer/internal/service/user:
-        interfaces:
-            TeamRepository:
-            UserRepository:
+  avitotech-pr-reviewer/internal/service/team:
+    interfaces:
+      TeamRepository:
+      UserRepository:
+  avitotech-pr-reviewer/internal/service/user:
+    interfaces:
+      TeamRepository:
+      UserRepository:
+  avitotech-pr-reviewer/internal/service/pullrequest:
+    interfaces:
+      PrRepository:
+      TeamRepository:
+      UserRepository:

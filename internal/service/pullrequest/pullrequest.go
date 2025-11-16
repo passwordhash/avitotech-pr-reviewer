@@ -11,33 +11,33 @@ import (
 	repoErr "avitotech-pr-reviewer/internal/storage/errors"
 )
 
-type prRepository interface {
+type PrRepository interface {
 	Create(ctx context.Context, pr *domain.PullRequest) (*domain.PullRequest, error)
 }
 
-type userRepository interface {
+type UserRepository interface {
 	GetByID(ctx context.Context, userID string) (*domain.User, error)
 }
 
-type teamRepository interface {
+type TeamRepository interface {
 	GetActiveMembersByTeamID(ctx context.Context, teamID string) ([]domain.Member, error)
 }
 
 type Service struct {
 	lgr *slog.Logger
 
-	prRepo   prRepository
-	userRepo userRepository
-	teamRepo teamRepository
+	prRepo   PrRepository
+	userRepo UserRepository
+	teamRepo TeamRepository
 
 	maxReviewers int // максимальное количество ревьюверов на PR
 }
 
 func New(
 	lgr *slog.Logger,
-	prRepo prRepository,
-	userRepo userRepository,
-	teamRepo teamRepository,
+	prRepo PrRepository,
+	userRepo UserRepository,
+	teamRepo TeamRepository,
 	maxReviewers int,
 ) *Service {
 	return &Service{
