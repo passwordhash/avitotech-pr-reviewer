@@ -62,3 +62,46 @@ func (h *handler) merge(c *gin.Context) {
 
 	response.NewOK(c, prResponse{PR: *FromDomainPR(pr)})
 }
+
+type reassignRequest struct {
+	PullRequestID string `json:"pull_request_id" binding:"required"`
+	OldReviewerID string `json:"old_reviewer_id" binding:"required"`
+}
+
+type reassignResponse struct {
+	PR           PullRequest `json:"pr"`
+	ReplacedByID string      `json:"replaced_by"`
+}
+
+func (h *handler) reassign(c *gin.Context) {
+	var req reassignRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		response.NewError(c, response.BadRequest, "invalid request body", err)
+		return
+	}
+
+	pr, replacedBy, err := h.prSvc.ReassignReviewer(c, req.PullRequestID, req.OldReviewerID)
+	if errors.Is(err, svcErr.ErrPRNoCandidates) {
+		response.NewError(c, response.BadRequest, "no available candidates for reassignment", err)
+
+		return
+	}
+	if errors.Is(err, svcErr.ErrUserNotFound) || errors.Is(err, svcErr.ErrPRNotFound) {
+		response.NewError(c, response.NotFound, "resource not founed", err)
+		return
+	}
+	if errors.Is(err, svcErr.ErrPRAlreadyMerged) {
+		response.NewError(c, response.PrMerged, "pull request already merged", err)
+		return
+	}
+	if err != nil {
+		response.NewError(c, response.InternalError, "failed to reassign reviewer", err)
+		return
+	}
+
+	response.NewOK(c, reassignResponse{
+		PR:           *FromDomainPR(pr),
+		ReplacedByID: replacedBy,
+	})
+}

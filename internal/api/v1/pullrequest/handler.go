@@ -16,6 +16,7 @@ type adminVerifier interface {
 type prService interface {
 	CreatePullRequest(ctx context.Context, id, name, authorID string) (*domain.PullRequest, error)
 	SetMerged(ctx context.Context, prID string) (*domain.PullRequest, error)
+	ReassignReviewer(ctx context.Context, prID, oldReviewerID string) (*domain.PullRequest, string, error)
 }
 
 type handler struct {
@@ -35,6 +36,6 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	{
 		prsGroup.POST("/create", h.create)
 		prsGroup.POST("/merge", h.merge)
-		prsGroup.POST("/reassign")
+		prsGroup.POST("/reassign", h.reassign)
 	}
 }

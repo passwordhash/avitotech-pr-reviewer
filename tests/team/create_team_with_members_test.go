@@ -8,6 +8,11 @@ import (
 	"github.com/gavv/httpexpect/v2"
 )
 
+const (
+	adminTokenHeader = "X-Admin-Token"
+	adminToken       = "supersecrettoken"
+)
+
 var baseURL url.URL
 
 func init() {
@@ -26,7 +31,7 @@ type member struct {
 }
 
 type team struct {
-	TeamName string `json:"team_name"`
+	TeamName string   `json:"team_name"`
 	Members  []member `json:"members"`
 }
 
@@ -49,7 +54,7 @@ func TestAddTeam_OK(t *testing.T) {
 	}
 
 	var resp addTeamResponse
-	e.POST("/add").WithJSON(teamData).Expect().
+	e.POST("/add").WithJSON(teamData).WithHeader(adminTokenHeader, adminToken).Expect().
 		Status(201).JSON().Object().ContainsKey("team").Decode(&resp)
 
 	if resp.Team.TeamName != teamData.TeamName {

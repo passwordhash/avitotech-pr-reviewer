@@ -20,6 +20,8 @@ linters:
         - wrapcheck
         - nlreturn
         - ireturn
+        - gosec
+        - cyclop
         - nosprintfhostport
         - tagliatelle
         - revive

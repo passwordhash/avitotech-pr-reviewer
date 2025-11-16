@@ -42,6 +42,7 @@ test-e2e-up:
 		up -d --build
 
 test-e2e: test-e2e-up
+	go mod tidy
 	HTTP_PORT=$(HTTP_PORT_E2E) go test -v ./tests/...
 	$(MAKE) test-e2e-down
 

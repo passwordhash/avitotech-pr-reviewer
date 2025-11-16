@@ -161,6 +161,60 @@ func (r *Repository) GetReviewerIDs(ctx context.Context, prID string) ([]string,
 	return reviewerIDs, nil
 }
 
+// SetNewReviewer заменяет старого ревьюера новым для указанного Pull Request.
+// Если указанный Pull Request не найден, возвращается ошибка repoErr.ErrPRNotFound.
+// Если указанный старый ревьюер не назначен на этот Pull Request, возвращается ошибка repoErr.ErrUserNotFound.
+func (r *Repository) SetNewReviewer(
+	ctx context.Context,
+	prID, oldReviewerID, newReviewerID string,
+) (*domain.PullRequest, error) {
+	const op = "pullrequest.Repository.SetNewReviewer"
+
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+
+	const deleteQuery = `
+		DELETE FROM pull_request_reviewers
+		WHERE pull_request_id = $1 AND reviewer_id = $2
+	`
+	cmdTag, err := tx.Exec(ctx, deleteQuery, prID, oldReviewerID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		_ = tx.Rollback(ctx)
+		return nil, repoErr.ErrUserNotFound
+	}
+
+	const insertQuery = `
+		INSERT INTO pull_request_reviewers (pull_request_id, reviewer_id)
+		VALUES ($1, $2)
+	`
+	_, err = tx.Exec(ctx, insertQuery, prID, newReviewerID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	updatedPR, err := r.GetByID(ctx, prID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return updatedPR, nil
+}
+
 // SetMerged помечает указанный Pull Request как merged.
 // Если Pull Request не найден, возвращается ошибка repoErr.ErrPRNotFound.
 // Операция не является идемпотентной. Нужно вызывать только если Pull Request ещё не был помечен как merged.
