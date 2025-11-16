@@ -9,6 +9,7 @@ type User struct {
 	TeamID   string `db:"team_id"`
 }
 
+
 func (u User) ToUserDomain() *domain.User {
 	return &domain.User{
 		ID:       u.UserID,
@@ -23,5 +24,19 @@ func (u User) ToMemberDomain() *domain.Member {
 		ID:       u.UserID,
 		Username: u.Username,
 		IsActive: u.IsActive,
+	}
+}
+
+type Member struct {
+	UserID   string `db:"user_id"`
+	Username string `db:"username"`
+	IsActive bool   `db:"is_active"`
+}
+
+func (m Member) ToMemberDomain() *domain.Member {
+	return &domain.Member{
+		ID:       m.UserID,
+		Username: m.Username,
+		IsActive: m.IsActive,
 	}
 }

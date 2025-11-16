@@ -8,8 +8,8 @@ INSERT INTO pull_request_statuses (status) VALUES
 ('merged');
 
 CREATE TABLE IF NOT EXISTS pull_requests (
-    pull_request_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    pull_request_id VARCHAR(50) NOT NULL PRIMARY KEY,
+    pull_request_name VARCHAR(255) NOT NULL,
     status_id INT DEFAULT 1 REFERENCES pull_request_statuses(id) ON DELETE SET DEFAULT,
     is_need_more_reviewers BOOLEAN NOT NULL DEFAULT TRUE,
     author_id VARCHAR(50) NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS pull_requests (
 );
 
 CREATE TABLE IF NOT EXISTS pull_request_reviewers (
-    pull_request_id UUID NOT NULL REFERENCES pull_requests(pull_request_id) ON DELETE CASCADE,
+    pull_request_id VARCHAR(50) NOT NULL REFERENCES pull_requests(pull_request_id) ON DELETE CASCADE,
     reviewer_id VARCHAR(50) NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     CONSTRAINT pk_pull_request_reviews PRIMARY KEY (pull_request_id, reviewer_id)
 );

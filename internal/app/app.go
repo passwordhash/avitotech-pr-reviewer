@@ -8,8 +8,10 @@ import (
 
 	httpapp "avitotech-pr-reviewer/internal/app/http"
 	"avitotech-pr-reviewer/internal/config"
+	prService "avitotech-pr-reviewer/internal/service/pullrequest"
 	teamService "avitotech-pr-reviewer/internal/service/team"
 	userService "avitotech-pr-reviewer/internal/service/user"
+	prRepository "avitotech-pr-reviewer/internal/storage/postgres/pullrequest"
 	teamRepository "avitotech-pr-reviewer/internal/storage/postgres/team"
 	userRepository "avitotech-pr-reviewer/internal/storage/postgres/user"
 	pgPkg "avitotech-pr-reviewer/pkg/postgres"
@@ -31,14 +33,18 @@ func New(
 
 	teamRepo := teamRepository.New(pgPool)
 	userRepo := userRepository.New(pgPool)
+	prRepo := prRepository.New(pgPool)
 
 	teamSvc := teamService.New(lgr.WithGroup("service.team"), teamRepo, userRepo)
-	userSvc := userService.New(lgr.WithGroup("service.user"), userRepo, teamRepo, cfg.AdminToken)
+	userSvc := userService.New(lgr.WithGroup("service.user"), userRepo, teamRepo, cfg.App.AdminToken)
+	prSvc := prService.New(lgr.WithGroup("service.pullrequest"),
+		prRepo, userRepo, teamRepo, cfg.App.MaxReviewersPerPR)
 
 	srv := httpapp.New(
 		lgr,
 		teamSvc,
 		userSvc,
+		prSvc,
 		httpapp.WithPort(cfg.HTTP.Port),
 		httpapp.WithReadTimeout(cfg.HTTP.ReadTimeout),
 		httpapp.WithWriteTimeout(cfg.HTTP.WriteTimeout),

@@ -74,10 +74,7 @@ func (s *Service) CreateTeam(
 }
 
 // TeamWithMembers возвращает команду с указанным именем вместе с ее участниками.
-func (s *Service) TeamWithMembers(
-	ctx context.Context,
-	teamName string,
-) (*domain.Team, error) {
+func (s *Service) TeamWithMembers(ctx context.Context, teamName string) (*domain.Team, error) {
 	const op = "team.TeamWithMembers"
 
 	lgr := s.lgr.With(

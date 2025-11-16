@@ -8,6 +8,7 @@ import (
 	"avitotech-pr-reviewer/internal/domain"
 	repoErr "avitotech-pr-reviewer/internal/storage/errors"
 	"avitotech-pr-reviewer/internal/storage/postgres/team/model"
+	userModel "avitotech-pr-reviewer/internal/storage/postgres/user/model"
 	pgPkg "avitotech-pr-reviewer/pkg/postgres"
 )
 
@@ -127,6 +128,52 @@ func (r *Repository) GetByName(ctx context.Context, teamName string) (*domain.Te
 	}
 
 	return teamDB.ToDomain(), nil
+}
+
+// GetActiveMembersByTeamID возвращает список активных участников команды по идентификатору команды.
+func (r *Repository) GetActiveMembersByTeamID(ctx context.Context, teamID string) ([]domain.Member, error) {
+	const op = "repository.team.GetActiveMembersByTeamID"
+
+	const existsQuery = `
+		SELECT 1 FROM teams
+		WHERE team_id = $1
+	`
+	var exists int
+	err := r.db.QueryRow(ctx, existsQuery, teamID).Scan(&exists)
+	if pgPkg.IsNoRowsError(err) {
+		return nil, repoErr.ErrTeamNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	const listQuery = `
+		SELECT user_id, username, is_active
+		FROM users
+		WHERE team_id = $1 AND is_active = TRUE
+	`
+
+	rows, err := r.db.Query(ctx, listQuery, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var members []domain.Member
+	for rows.Next() {
+		m, err := pgPkg.RowToStructByName[userModel.Member](rows)
+		if err != nil {
+			return nil, fmt.Errorf("%s: map row: %w", op, err)
+		}
+		members = append(members, *m.ToMemberDomain())
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return members, nil
 }
 
 // GetByID возвращает команду по ее идентификатору.

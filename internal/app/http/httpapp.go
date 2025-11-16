@@ -12,8 +12,10 @@ import (
 	"time"
 
 	"avitotech-pr-reviewer/internal/api/middleware"
+	prHandler "avitotech-pr-reviewer/internal/api/v1/pullrequest"
 	teamHandler "avitotech-pr-reviewer/internal/api/v1/team"
-	usersHandler "avitotech-pr-reviewer/internal/api/v1/user"
+	userHandler "avitotech-pr-reviewer/internal/api/v1/user"
+	prService "avitotech-pr-reviewer/internal/service/pullrequest"
 	teamService "avitotech-pr-reviewer/internal/service/team"
 	userService "avitotech-pr-reviewer/internal/service/user"
 
@@ -32,6 +34,7 @@ type App struct {
 
 	teamSvc *teamService.Service
 	userSvc *userService.Service
+	prSvc   *prService.Service
 
 	port           int
 	readTimeout    time.Duration
@@ -78,12 +81,15 @@ func New(
 	lgr *slog.Logger,
 	teamSvc *teamService.Service,
 	userSvc *userService.Service,
+	prService *prService.Service,
 	opts ...Option,
 ) *App {
 	app := &App{
-		lgr:            lgr,
-		teamSvc:        teamSvc,
-		userSvc:        userSvc,
+		lgr:     lgr,
+		teamSvc: teamSvc,
+		userSvc: userSvc,
+		prSvc:   prService,
+
 		readTimeout:    srvReadTimeoutDefault,
 		writeTimeout:   srvWriteTimeoutDefault,
 		requestTimeout: srvGatewayTimeoutDefault,
@@ -116,7 +122,8 @@ func (a *App) Run(ctx context.Context) error {
 	lgr.InfoContext(ctx, "starting HTTP http_server")
 
 	teamHlr := teamHandler.New(a.teamSvc, a.userSvc)
-	usersHlr := usersHandler.New(a.userSvc, a.userSvc)
+	usersHlr := userHandler.New(a.userSvc, a.userSvc)
+	prHlr := prHandler.New(a.userSvc, a.prSvc)
 
 	app := gin.New()
 	app.Use(gin.Recovery())
@@ -130,6 +137,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	teamHlr.RegisterRoutes(base)
 	usersHlr.RegisterRoutes(base)
+	prHlr.RegisterRoutes(base)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", a.port),

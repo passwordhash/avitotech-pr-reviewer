@@ -16,10 +16,15 @@ const (
 )
 
 type Config struct {
-	Env        string     `yaml:"env" env:"APP_ENV" env-required:"true"`
-	AdminToken string     `env:"ADMIN_TOKEN" env-required:"true"`
+	App 	   AppConfig  `yaml:"app" env-required:"true"`
 	HTTP       HTTPConfig `yaml:"http" env-required:"true"`
 	PG         PGConfig   `yaml:"postgres" env-required:"true"`
+}
+
+type AppConfig struct {
+	Env        string `yaml:"env" env:"APP_ENV" env-required:"true"`
+	AdminToken string `env:"ADMIN_TOKEN" env-required:"true"`
+	MaxReviewersPerPR int    `yaml:"max_reviewers_per_pr" env:"REVIEWERS_PER_PR" env-required:"true"`
 }
 
 type HTTPConfig struct {

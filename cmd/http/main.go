@@ -28,7 +28,7 @@ func main() {
 
 	cfg := config.MustLoad()
 
-	lgr := config.NewLogger(cfg.Env)
+	lgr := config.NewLogger(cfg.App.Env)
 	slog.SetDefault(lgr)
 
 	lgr.Info("starting pr-reviewer application")

@@ -77,3 +77,27 @@ func (r *Repository) SetIsActive(ctx context.Context, userID string, isActive bo
 
 	return userDB.ToUserDomain(), nil
 }
+
+// GetByID возвращает пользователя по его идентификатору.
+// Если пользователь не найден, возвращается ошибка repoErr.ErrUserNotFound.
+func (r *Repository) GetByID(ctx context.Context, userID string) (*domain.User, error) {
+	const op = "repository.user.GetByID"
+
+	const getQuery = `
+		SELECT user_id, username, is_active, team_id
+		FROM users
+		WHERE user_id = $1
+	`
+
+	row := r.db.QueryRow(ctx, getQuery, userID)
+	var userDB model.User
+	err := row.Scan(&userDB.UserID, &userDB.Username, &userDB.IsActive, &userDB.TeamID)
+	if pgPkg.IsNoRowsError(err) {
+		return nil, fmt.Errorf("%s: %w", op, repoErr.ErrUserNotFound)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: scan row: %w", op, err)
+	}
+
+	return userDB.ToUserDomain(), nil
+}
