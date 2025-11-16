@@ -94,7 +94,111 @@ func (r *Repository) Create(ctx context.Context, pr *domain.PullRequest) (*domai
 	return pullRequest, nil
 }
 
-func (r *Repository) addReviewers(ctx context.Context, q pgPkg.Querier, prID string, reviewerIDs []string) error {
+// GetByID возвращает Pull Request по его ID.
+// Если Pull Request не найден, возвращается ошибка repoErr.ErrPRNotFound.
+func (r *Repository) GetByID(ctx context.Context, prID string) (*domain.PullRequest, error) {
+	const op = "pullrequest.Repository.GetByID"
+
+	const query = `
+		SELECT pull_request_id, pull_request_name, author_id,
+			   created_at, status_id, merged_at, is_need_more_reviewers
+		FROM pull_requests
+		WHERE pull_request_id = $1
+	`
+	rows, err := r.db.Query(ctx, query, prID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	found, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.PullRequest])
+	if pgPkg.IsNoRowsError(err) {
+		return nil, repoErr.ErrPRNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	status, err := r.getStatusByID(ctx, r.db, found.StatusID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return found.ToDomain(status), nil
+}
+
+// GetReviewerIDs возвращает список ID ревьюеров, назначенных на указанный Pull Request.
+// Метод не возвращает ошибку, если Pull Request не найден или у него нет назначенных ревьюеров.
+func (r *Repository) GetReviewerIDs(ctx context.Context, prID string) ([]string, error) {
+	const op = "pullrequest.Repository.GetReviewerIDs"
+
+	const query = `
+		SELECT reviewer_id
+		FROM pull_request_reviewers
+		WHERE pull_request_id = $1
+	`
+	rows, err := r.db.Query(ctx, query, prID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var reviewerIDs []string
+	for rows.Next() {
+		var reviewerID string
+		err := rows.Scan(&reviewerID)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+		reviewerIDs = append(reviewerIDs, reviewerID)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return reviewerIDs, nil
+}
+
+// SetMerged помечает указанный Pull Request как merged.
+// Если Pull Request не найден, возвращается ошибка repoErr.ErrPRNotFound.
+// Операция не является идемпотентной. Нужно вызывать только если Pull Request ещё не был помечен как merged.
+func (r *Repository) SetMerged(ctx context.Context, prID string) (*domain.PullRequest, error) {
+	const op = "pullrequest.Repository.SetMerged"
+
+	const query = `
+		UPDATE pull_requests
+		SET status_id = (SELECT id FROM pull_request_statuses WHERE UPPER(status) = 'MERGED'),
+			merged_at = NOW()
+		WHERE pull_request_id = $1
+		RETURNING *
+	`
+	rows, err := r.db.Query(ctx, query, prID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	updated, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.PullRequest])
+	if pgPkg.IsNoRowsError(err) {
+		return nil, repoErr.ErrPRNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	status, err := r.getStatusByID(ctx, r.db, updated.StatusID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	pullRequest := updated.ToDomain(status)
+
+	return pullRequest, nil
+}
+
+func (r *Repository) addReviewers(ctx context.Context, q pgPkg.Tx, prID string, reviewerIDs []string) error {
 	const op = "pullrequest.Repository.addReviewers"
 
 	const query = `
@@ -127,11 +231,7 @@ func (r *Repository) addReviewers(ctx context.Context, q pgPkg.Querier, prID str
 	return nil
 }
 
-func (r *Repository) getStatusByID(
-	ctx context.Context,
-	q pgPkg.Querier,
-	statusID string,
-) (domain.PRStatus, error) {
+func (r *Repository) getStatusByID(ctx context.Context, q pgPkg.Querier, statusID string) (domain.PRStatus, error) {
 	const op = "pullrequest.Repository.getStatusByID"
 	const query = `
         SELECT status

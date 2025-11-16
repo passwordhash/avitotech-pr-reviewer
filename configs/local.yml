@@ -1,6 +1,6 @@
 app:
     env: "local"
-    reviewers_per_pr: 2
+    max_reviewers_per_pr: 2
 
 http:
     port: 8080

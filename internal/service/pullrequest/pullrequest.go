@@ -13,6 +13,9 @@ import (
 
 type PrRepository interface {
 	Create(ctx context.Context, pr *domain.PullRequest) (*domain.PullRequest, error)
+	GetByID(ctx context.Context, prID string) (*domain.PullRequest, error)
+	GetReviewerIDs(ctx context.Context, prID string) ([]string, error)
+	SetMerged(ctx context.Context, prID string) (*domain.PullRequest, error)
 }
 
 type UserRepository interface {
@@ -105,7 +108,64 @@ func (s *Service) CreatePullRequest(ctx context.Context, id, name, authorID stri
 		return nil, err
 	}
 
+	lgr.InfoContext(ctx, "pull request created", slog.String("pull_request_id", pr.ID))
+
 	return pr, nil
+}
+
+// SetMerged помечает указанный Pull Request как merged.
+// Если Pull Request не найден, возвращается ошибка svcErr.ErrPRNotFound.
+// Если Pull Request уже помечен как merged, возвращается его текущее состояние - идемпотентная операция.
+func (s *Service) SetMerged(ctx context.Context, prID string) (*domain.PullRequest, error) {
+	const op = "pullrequest.SetMerged"
+
+	lgr := s.lgr.With(
+		slog.String("op", op),
+		slog.String("pull_request_id", prID),
+	)
+
+	pr, err := s.prRepo.GetByID(ctx, prID)
+	if errors.Is(err, repoErr.ErrPRNotFound) {
+		lgr.DebugContext(ctx, "pull request not found", slog.String("error", err.Error()))
+
+		return nil, svcErr.ErrPRNotFound
+	}
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to get pull request by ID", slog.String("error", err.Error()))
+
+		return nil, err
+	}
+
+	reviewers, err := s.prRepo.GetReviewerIDs(ctx, prID)
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to get reviewer IDs for pull request", slog.String("error", err.Error()))
+		return nil, err
+	}
+
+	if pr.Status == domain.PRStatusMerged {
+		lgr.InfoContext(ctx, "pull request is already marked as merged", slog.String("pull_request_id", prID))
+		pr.Reviewers = reviewers
+
+		return pr, nil
+	}
+
+	mergedPR, err := s.prRepo.SetMerged(ctx, prID)
+	if errors.Is(err, repoErr.ErrPRNotFound) {
+		lgr.DebugContext(ctx, "pull request not found", slog.String("error", err.Error()))
+
+		return nil, svcErr.ErrPRNotFound
+	}
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to set pull request as merged", slog.String("error", err.Error()))
+
+		return nil, err
+	}
+
+	mergedPR.Reviewers = reviewers
+
+	lgr.InfoContext(ctx, "pull request marked as merged", slog.String("pull_request_id", prID))
+
+	return mergedPR, nil
 }
 
 func (s *Service) selectReviewers(teamMembers []domain.Member, authorID string, maxCount int) []string {
