@@ -11,6 +11,10 @@ import (
 
 const teamNameQueryP = "team_name"
 
+type addTeamResponse struct {
+	Team teamDTO `json:"team"`
+}
+
 func (h *handler) add(c *gin.Context) {
 	var req addReq
 
@@ -30,7 +34,9 @@ func (h *handler) add(c *gin.Context) {
 		return
 	}
 
-	response.NewCreated(c, fromDomainTeam(created))
+	response.NewCreated(c, addTeamResponse{
+		Team: fromDomainTeam(created),
+	})
 }
 
 func (h *handler) get(c *gin.Context) {

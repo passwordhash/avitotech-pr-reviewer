@@ -1,0 +1,16 @@
+env: "local"
+
+http:
+    port: 8080
+    read_timeout: 5s
+    write_timeout: 5s
+    gateway_timeout: 5s
+
+postgres:
+    host: postgres-test
+    port: 5432
+    user: test_user
+    password: test_password
+    database: test_db
+    ssl: disable
+    max_conns: 15

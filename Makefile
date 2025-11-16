@@ -28,3 +28,25 @@ migration-up:
 
 migration-down:
 	POSTGRES_HOST=localhost migrate -path ./migrations -database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSL)" -verbose down
+
+# ==========================
+# e2e тесты
+# ==========================
+HTTP_PORT_E2E ?= 8081
+CONTAINER_NAME_E2E ?= pr-reviewer-e2e
+
+test-e2e-up:
+	docker compose \
+		-f docker-compose.e2e.yml \
+		-p $(CONTAINER_NAME_E2E) \
+		up -d --build
+
+test-e2e: test-e2e-up
+	HTTP_PORT=$(HTTP_PORT_E2E) go test -v ./tests/...
+	$(MAKE) test-e2e-down
+
+test-e2e-down:
+	docker compose \
+		-f docker-compose.e2e.yml \
+		-p $(CONTAINER_NAME_E2E) \
+		down -v

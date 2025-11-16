@@ -52,18 +52,18 @@ func fromDomainMember(m domain.Member) userResp {
 	}
 }
 
-type addResp struct {
+type teamDTO struct {
 	TeamName string     `json:"team_name"`
 	Members  []userResp `json:"members"`
 }
 
-func fromDomainTeam(t *domain.Team) addResp {
+func fromDomainTeam(t *domain.Team) teamDTO {
 	members := make([]userResp, len(t.Members))
 	for i, member := range t.Members {
 		members[i] = fromDomainMember(member)
 	}
 
-	return addResp{
+	return teamDTO{
 		TeamName: t.Name,
 		Members:  members,
 	}

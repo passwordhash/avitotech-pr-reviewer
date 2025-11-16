@@ -57,7 +57,7 @@ func (r *Repository) CreateWithMembers(
 	}
 
 	const createTeamMemberQuery = `
-		INSERT INTO user (user_id, username, is_active, team_id)
+		INSERT INTO users (user_id, username, is_active, team_id)
 			VALUES ($1, $2, $3, $4)
             ON CONFLICT (user_id)
             DO UPDATE SET
