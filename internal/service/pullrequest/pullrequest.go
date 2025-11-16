@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"math/rand/v2"
+	"math/rand"
+	"slices"
 
 	"avitotech-pr-reviewer/internal/domain"
 	svcErr "avitotech-pr-reviewer/internal/service/errors"
@@ -16,6 +17,7 @@ type PrRepository interface {
 	GetByID(ctx context.Context, prID string) (*domain.PullRequest, error)
 	GetReviewerIDs(ctx context.Context, prID string) ([]string, error)
 	SetMerged(ctx context.Context, prID string) (*domain.PullRequest, error)
+	SetNewReviewer(ctx context.Context, prID, oldReviewerID, newReviewerID string) (*domain.PullRequest, error)
 }
 
 type UserRepository interface {
@@ -168,6 +170,116 @@ func (s *Service) SetMerged(ctx context.Context, prID string) (*domain.PullReque
 	return mergedPR, nil
 }
 
+func (s *Service) ReassignReviewer(
+	ctx context.Context,
+	prID, oldReviewerID string,
+) (*domain.PullRequest, string, error) {
+	const op = "pullrequest.ReassignReviewer"
+
+	lgr := s.lgr.With(
+		slog.String("op", op),
+		slog.String("pull_request_id", prID),
+		slog.String("old_reviewer_id", oldReviewerID),
+	)
+
+	pr, reviewers, err := s.getPRWithReviewers(ctx, prID, lgr)
+	if err != nil {
+		return nil, "", err
+	}
+
+	newReviewerID, err := s.chooseNewReviewer(ctx, pr, reviewers, oldReviewerID, lgr)
+	if err != nil {
+		return nil, "", err
+	}
+
+	updatedPR, err := s.prRepo.SetNewReviewer(ctx, prID, oldReviewerID, newReviewerID)
+	if errors.Is(err, repoErr.ErrPRNotFound) {
+		lgr.DebugContext(ctx, "pull request not found", slog.String("error", err.Error()))
+		return nil, "", svcErr.ErrPRNotFound
+	}
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to reassign reviewer", slog.String("error", err.Error()))
+		return nil, "", err
+	}
+
+	return updatedPR, newReviewerID, nil
+}
+
+func (s *Service) getPRWithReviewers(
+	ctx context.Context,
+	prID string,
+	lgr *slog.Logger,
+) (*domain.PullRequest, []string, error) {
+	pr, err := s.prRepo.GetByID(ctx, prID)
+	if errors.Is(err, repoErr.ErrPRNotFound) {
+		lgr.DebugContext(ctx, "pull request not found", slog.String("error", err.Error()))
+		return nil, nil, svcErr.ErrPRNotFound
+	}
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to get pull request by ID", slog.String("error", err.Error()))
+		return nil, nil, err
+	}
+
+	if pr.Status == domain.PRStatusMerged {
+		lgr.DebugContext(ctx, "pull request already merged")
+		return nil, nil, svcErr.ErrPRAlreadyMerged
+	}
+
+	reviewers, err := s.prRepo.GetReviewerIDs(ctx, prID)
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to get reviewer IDs for pull request", slog.String("error", err.Error()))
+		return nil, nil, err
+	}
+
+	return pr, reviewers, nil
+}
+
+func (s *Service) chooseNewReviewer(
+	ctx context.Context,
+	pr *domain.PullRequest,
+	reviewers []string,
+	oldReviewerID string,
+	lgr *slog.Logger,
+) (string, error) {
+	if !slices.Contains(reviewers, oldReviewerID) {
+		lgr.DebugContext(ctx, "old reviewer ID not assigned to the pull request")
+		return "", svcErr.ErrUserNotFound
+	}
+
+	prAuthor, err := s.userRepo.GetByID(ctx, pr.AuthorID)
+	if errors.Is(err, repoErr.ErrUserNotFound) {
+		lgr.DebugContext(ctx, "pull request author not found", slog.String("error", err.Error()))
+		return "", svcErr.ErrUserNotFound
+	}
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to get pull request author by ID", slog.String("error", err.Error()))
+		return "", err
+	}
+
+	teamMembers, err := s.teamRepo.GetActiveMembersByTeamID(ctx, prAuthor.TeamID)
+	if errors.Is(err, repoErr.ErrTeamNotFound) {
+		lgr.DebugContext(ctx, "team not found", slog.String("error", err.Error()))
+		return "", svcErr.ErrTeamNotFound
+	}
+	if err != nil {
+		lgr.ErrorContext(ctx, "failed to get team members by team ID", slog.String("error", err.Error()))
+		return "", err
+	}
+
+	candidates := make([]string, 0, len(teamMembers))
+	for _, member := range teamMembers {
+		if member.ID != prAuthor.ID && member.ID != oldReviewerID {
+			candidates = append(candidates, member.ID)
+		}
+	}
+
+	if len(candidates) == 0 {
+		lgr.DebugContext(ctx, "no available candidates for reassignment")
+		return "", svcErr.ErrPRNoCandidates
+	}
+
+	return candidates[rand.Intn(len(candidates))], nil
+}
 func (s *Service) selectReviewers(teamMembers []domain.Member, authorID string, maxCount int) []string {
 	candidates := make([]string, 0, len(teamMembers))
 	for _, member := range teamMembers {

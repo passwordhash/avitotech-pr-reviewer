@@ -131,6 +131,7 @@ func (r *Repository) GetByName(ctx context.Context, teamName string) (*domain.Te
 }
 
 // GetActiveMembersByTeamID возвращает список активных участников команды по идентификатору команды.
+// Если команда с таким идентификатором не найдена, возвращается ошибка repoErr.ErrTeamNotFound.
 func (r *Repository) GetActiveMembersByTeamID(ctx context.Context, teamID string) ([]domain.Member, error) {
 	const op = "repository.team.GetActiveMembersByTeamID"
 

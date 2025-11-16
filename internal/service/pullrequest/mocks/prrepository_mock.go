@@ -309,3 +309,83 @@ func (_c *MockPrRepository_SetMerged_Call) RunAndReturn(run func(ctx context.Con
 	_c.Call.Return(run)
 	return _c
 }
+
+// SetNewReviewer provides a mock function for the type MockPrRepository
+func (_mock *MockPrRepository) SetNewReviewer(ctx context.Context, prID string, oldReviewerID string, newReviewerID string) (*domain.PullRequest, error) {
+	ret := _mock.Called(ctx, prID, oldReviewerID, newReviewerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetNewReviewer")
+	}
+
+	var r0 *domain.PullRequest
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*domain.PullRequest, error)); ok {
+		return returnFunc(ctx, prID, oldReviewerID, newReviewerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *domain.PullRequest); ok {
+		r0 = returnFunc(ctx, prID, oldReviewerID, newReviewerID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.PullRequest)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = returnFunc(ctx, prID, oldReviewerID, newReviewerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockPrRepository_SetNewReviewer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetNewReviewer'
+type MockPrRepository_SetNewReviewer_Call struct {
+	*mock.Call
+}
+
+// SetNewReviewer is a helper method to define mock.On call
+//   - ctx context.Context
+//   - prID string
+//   - oldReviewerID string
+//   - newReviewerID string
+func (_e *MockPrRepository_Expecter) SetNewReviewer(ctx interface{}, prID interface{}, oldReviewerID interface{}, newReviewerID interface{}) *MockPrRepository_SetNewReviewer_Call {
+	return &MockPrRepository_SetNewReviewer_Call{Call: _e.mock.On("SetNewReviewer", ctx, prID, oldReviewerID, newReviewerID)}
+}
+
+func (_c *MockPrRepository_SetNewReviewer_Call) Run(run func(ctx context.Context, prID string, oldReviewerID string, newReviewerID string)) *MockPrRepository_SetNewReviewer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockPrRepository_SetNewReviewer_Call) Return(pullRequest *domain.PullRequest, err error) *MockPrRepository_SetNewReviewer_Call {
+	_c.Call.Return(pullRequest, err)
+	return _c
+}
+
+func (_c *MockPrRepository_SetNewReviewer_Call) RunAndReturn(run func(ctx context.Context, prID string, oldReviewerID string, newReviewerID string) (*domain.PullRequest, error)) *MockPrRepository_SetNewReviewer_Call {
+	_c.Call.Return(run)
+	return _c
+}
