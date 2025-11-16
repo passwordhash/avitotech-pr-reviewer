@@ -1,5 +1,46 @@
 # Avitotech Pull-Request Reviewer Service
 
+## Запуск сервиса
+
+1. Склонировать репозиторий:
+
+   ```bash
+   git clone git@github.com:passwordhash/avitotech-pr-reviewer.git
+   ```
+
+2. Перейти в директорию проекта:
+
+   ```bash
+   cd avitotech-pr-reviewer
+   ```
+
+3. Запустить командой Makefile:
+
+   ```bash
+   make up
+   ```
+
+   или использовать docker-compose напрямую:
+
+   ```bash
+   docker compose \
+		--env-file .env.local \
+		-p pr-reviewer \
+		up -d --build
+    ```
+
+4. Сервис будет доступен по адресу: `http://localhost:8080`
+
+## E2E тесты
+
+Инфраструктура для E2E тестов поднимается с помощью docker compose согласно `docker-compose.e2e.yml`. А запуск тестов производится локально на машине разработчика.
+
+Запуск E2E тестов командой Makefile:
+
+```bash
+make test-e2e
+```
+
 ## Допущения
 
 В условии не прописаны некоторые детали, которые я решил уточнить для себя, предполагая, что:
