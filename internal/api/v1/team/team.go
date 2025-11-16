@@ -43,9 +43,8 @@ func (h *handler) get(c *gin.Context) {
 	teamName := c.Query(teamNameQueryP)
 	if teamName == "" {
 		response.NewError(c, response.BadRequest, "team_name query parameter is required", nil)
+		return
 	}
-
-	//nolint:nolintlint,godox    // TODO: проверка amdmin токена
 
 	team, err := h.teamSvc.TeamWithMembers(c, teamName)
 	if errors.Is(err, svcErr.ErrTeamNotFound) {

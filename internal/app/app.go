@@ -41,8 +41,8 @@ func New(
 		userSvc,
 		httpapp.WithPort(cfg.HTTP.Port),
 		httpapp.WithReadTimeout(cfg.HTTP.ReadTimeout),
-		httpapp.WithWriteTimeout(cfg.HTTP.ReadTimeout),
-		httpapp.WithRequestTimeout(cfg.HTTP.ReadTimeout),
+		httpapp.WithWriteTimeout(cfg.HTTP.WriteTimeout),
+		httpapp.WithRequestTimeout(cfg.HTTP.GatewayTimeout),
 	)
 
 	return &App{

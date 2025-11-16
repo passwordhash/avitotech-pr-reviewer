@@ -11,3 +11,7 @@ packages:
         interfaces:
             TeamRepository:
             UserRepository:
+    avitotech-pr-reviewer/internal/service/user:
+        interfaces:
+            TeamRepository:
+            UserRepository:

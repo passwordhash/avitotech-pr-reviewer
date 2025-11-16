@@ -27,7 +27,7 @@ func (r *Repository) ListByTeamID(ctx context.Context, teamID string) ([]domain.
 
 	const listQuery = `
 		SELECT user_id, username, is_active, team_id
-		FROM user
+		FROM users
 		WHERE team_id = $1
 	`
 

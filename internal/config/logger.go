@@ -14,6 +14,8 @@ func NewLogger(env string) *slog.Logger {
 		handler = slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug})
 	case envProd:
 		handler = slog.NewJSONHandler(w, &slog.HandlerOptions{Level: slog.LevelInfo})
+	default:
+		handler = slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelInfo})
 	}
 
 	return slog.New(handler)
