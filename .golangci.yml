@@ -2,12 +2,16 @@ version: "2"
 run:
     tests: true
     concurrency: 4
-    # timeout: 5m
 
 linters:
     exclusions:
         paths:
             - tests/
+        rules:
+            - path: '(.+)_test\.go'
+              linters:
+                  - funlen
+
     default: all
     disable:
         - wsl
@@ -57,7 +61,6 @@ linters:
         - dogsled
         - funlen
         - goheader
-
     settings:
         funlen:
             lines: 80

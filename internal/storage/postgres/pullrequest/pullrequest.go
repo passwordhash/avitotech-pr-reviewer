@@ -96,6 +96,7 @@ func (r *Repository) Create(ctx context.Context, pr *domain.PullRequest) (*domai
 
 // GetByID возвращает Pull Request по его ID.
 // Если Pull Request не найден, возвращается ошибка repoErr.ErrPRNotFound.
+// PR возвращается без назначенных ревьюеров.
 func (r *Repository) GetByID(ctx context.Context, prID string) (*domain.PullRequest, error) {
 	const op = "pullrequest.Repository.GetByID"
 

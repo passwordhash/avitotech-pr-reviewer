@@ -116,6 +116,7 @@ func (s *Service) CreatePullRequest(ctx context.Context, id, name, authorID stri
 }
 
 // SetMerged помечает указанный Pull Request как merged.
+// Количество ревьюверов не влияет на возможность слияния.
 // Если Pull Request не найден, возвращается ошибка svcErr.ErrPRNotFound.
 // Если Pull Request уже помечен как merged, возвращается его текущее состояние - идемпотентная операция.
 func (s *Service) SetMerged(ctx context.Context, prID string) (*domain.PullRequest, error) {

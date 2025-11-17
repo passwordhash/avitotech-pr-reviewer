@@ -18,7 +18,7 @@ import (
 
 var errUnexpected = errors.New("unexpected error")
 
-func TestService_SetIsActive(t *testing.T) { //nolint:funlen
+func TestService_SetIsActive(t *testing.T) {
 	tests := []struct {
 		name          string
 		userID        string
