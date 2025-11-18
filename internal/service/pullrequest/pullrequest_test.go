@@ -152,12 +152,10 @@ func TestService_SetMerged(t *testing.T) {
 						Name:      "Add cart",
 						AuthorID:  "u123",
 						Status:    domain.PRStatusOpen,
+						Reviewers: []string{"u100", "u101"},
 						CreatedAt: createdTime,
 						MergedAt:  nil,
 					}, nil)
-
-				m.On("GetReviewerIDs", mock.Anything, "pr-100").
-					Return([]string{"u100", "u101"}, nil)
 
 				m.On("SetMerged", mock.Anything, "pr-100", mock.Anything).
 					Return(&domain.PullRequest{
@@ -191,12 +189,10 @@ func TestService_SetMerged(t *testing.T) {
 						Name:      "Add cart",
 						AuthorID:  "u123",
 						Status:    domain.PRStatusMerged,
+						Reviewers: []string{"u100", "u101"},
 						CreatedAt: createdTime,
 						MergedAt:  &mergedTime,
 					}, nil)
-
-				m.On("GetReviewerIDs", mock.Anything, "pr-100").
-					Return([]string{"u100", "u101"}, nil)
 			},
 			expectedPR: &domain.PullRequest{
 				ID:        "pr-100",
@@ -219,12 +215,10 @@ func TestService_SetMerged(t *testing.T) {
 						Name:      "Add cart",
 						AuthorID:  "u123",
 						Status:    domain.PRStatusOpen,
+						Reviewers: nil,
 						CreatedAt: createdTime,
 						MergedAt:  nil,
 					}, nil)
-
-				m.On("GetReviewerIDs", mock.Anything, "pr-100").
-					Return([]string{}, nil)
 
 				m.On("SetMerged", mock.Anything, "pr-100", mock.Anything).
 					Return(&domain.PullRequest{
@@ -232,7 +226,7 @@ func TestService_SetMerged(t *testing.T) {
 						Name:      "Add cart",
 						AuthorID:  "u123",
 						Status:    domain.PRStatusMerged,
-						Reviewers: []string{},
+						Reviewers: nil,
 						CreatedAt: createdTime,
 						MergedAt:  &mergedTime,
 					}, nil)
@@ -242,7 +236,7 @@ func TestService_SetMerged(t *testing.T) {
 				Name:      "Add cart",
 				AuthorID:  "u123",
 				Status:    domain.PRStatusMerged,
-				Reviewers: []string{},
+				Reviewers: nil,
 				CreatedAt: createdTime,
 				MergedAt:  &mergedTime,
 			},

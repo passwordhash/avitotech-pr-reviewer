@@ -127,29 +127,20 @@ func (s *Service) SetMerged(ctx context.Context, prID string) (*domain.PullReque
 		slog.String("pull_request_id", prID),
 	)
 
-	pr, err := s.prRepo.GetByID(ctx, prID)
+	pullRequest, err := s.prRepo.GetByID(ctx, prID)
 	if errors.Is(err, repoErr.ErrPRNotFound) {
 		lgr.DebugContext(ctx, "pull request not found", slog.String("error", err.Error()))
 
 		return nil, svcErr.ErrPRNotFound
 	}
 	if err != nil {
-		lgr.ErrorContext(ctx, "failed to get pull request by ID", slog.String("error", err.Error()))
-
 		return nil, err
 	}
 
-	reviewers, err := s.prRepo.GetReviewerIDs(ctx, prID)
-	if err != nil {
-		lgr.ErrorContext(ctx, "failed to get reviewer IDs for pull request", slog.String("error", err.Error()))
-		return nil, err
-	}
-
-	if pr.Status == domain.PRStatusMerged {
+	if pullRequest.Status == domain.PRStatusMerged {
 		lgr.InfoContext(ctx, "pull request is already marked as merged", slog.String("pull_request_id", prID))
-		pr.Reviewers = reviewers
 
-		return pr, nil
+		return pullRequest, nil
 	}
 
 	mergedPR, err := s.prRepo.SetMerged(ctx, prID)
@@ -163,8 +154,6 @@ func (s *Service) SetMerged(ctx context.Context, prID string) (*domain.PullReque
 
 		return nil, err
 	}
-
-	mergedPR.Reviewers = reviewers
 
 	lgr.InfoContext(ctx, "pull request marked as merged", slog.String("pull_request_id", prID))
 
@@ -183,12 +172,17 @@ func (s *Service) ReassignReviewer(
 		slog.String("old_reviewer_id", oldReviewerID),
 	)
 
-	pr, reviewers, err := s.getPRWithReviewers(ctx, prID, lgr)
+	pullRequest, err := s.prRepo.GetByID(ctx, prID)
+	if errors.Is(err, repoErr.ErrPRNotFound) {
+		lgr.DebugContext(ctx, "pull request not found", slog.String("error", err.Error()))
+
+		return nil, "", svcErr.ErrPRNotFound
+	}
 	if err != nil {
 		return nil, "", err
 	}
 
-	newReviewerID, err := s.chooseNewReviewer(ctx, pr, reviewers, oldReviewerID, lgr)
+	newReviewerID, err := s.chooseNewReviewer(ctx, pullRequest, oldReviewerID, lgr)
 	if err != nil {
 		return nil, "", err
 	}
@@ -196,74 +190,51 @@ func (s *Service) ReassignReviewer(
 	updatedPR, err := s.prRepo.SetNewReviewer(ctx, prID, oldReviewerID, newReviewerID)
 	if errors.Is(err, repoErr.ErrPRNotFound) {
 		lgr.DebugContext(ctx, "pull request not found", slog.String("error", err.Error()))
+
 		return nil, "", svcErr.ErrPRNotFound
 	}
 	if err != nil {
 		lgr.ErrorContext(ctx, "failed to reassign reviewer", slog.String("error", err.Error()))
+
 		return nil, "", err
 	}
 
 	return updatedPR, newReviewerID, nil
 }
 
-func (s *Service) getPRWithReviewers(
-	ctx context.Context,
-	prID string,
-	lgr *slog.Logger,
-) (*domain.PullRequest, []string, error) {
-	pr, err := s.prRepo.GetByID(ctx, prID)
-	if errors.Is(err, repoErr.ErrPRNotFound) {
-		lgr.DebugContext(ctx, "pull request not found", slog.String("error", err.Error()))
-		return nil, nil, svcErr.ErrPRNotFound
-	}
-	if err != nil {
-		lgr.ErrorContext(ctx, "failed to get pull request by ID", slog.String("error", err.Error()))
-		return nil, nil, err
-	}
-
-	if pr.Status == domain.PRStatusMerged {
-		lgr.DebugContext(ctx, "pull request already merged")
-		return nil, nil, svcErr.ErrPRAlreadyMerged
-	}
-
-	reviewers, err := s.prRepo.GetReviewerIDs(ctx, prID)
-	if err != nil {
-		lgr.ErrorContext(ctx, "failed to get reviewer IDs for pull request", slog.String("error", err.Error()))
-		return nil, nil, err
-	}
-
-	return pr, reviewers, nil
-}
-
 func (s *Service) chooseNewReviewer(
 	ctx context.Context,
 	pr *domain.PullRequest,
-	reviewers []string,
 	oldReviewerID string,
 	lgr *slog.Logger,
 ) (string, error) {
-	if !slices.Contains(reviewers, oldReviewerID) {
+	if !slices.Contains(pr.Reviewers, oldReviewerID) {
 		lgr.DebugContext(ctx, "old reviewer ID not assigned to the pull request")
+
 		return "", svcErr.ErrUserNotFound
 	}
 
 	prAuthor, err := s.userRepo.GetByID(ctx, pr.AuthorID)
 	if errors.Is(err, repoErr.ErrUserNotFound) {
 		lgr.DebugContext(ctx, "pull request author not found", slog.String("error", err.Error()))
+
 		return "", svcErr.ErrUserNotFound
 	}
 	if err != nil {
 		lgr.ErrorContext(ctx, "failed to get pull request author by ID", slog.String("error", err.Error()))
+
 		return "", err
 	}
 
 	teamMembers, err := s.teamRepo.GetActiveMembersByTeamID(ctx, prAuthor.TeamID)
 	if errors.Is(err, repoErr.ErrTeamNotFound) {
 		lgr.DebugContext(ctx, "team not found", slog.String("error", err.Error()))
+
 		return "", svcErr.ErrTeamNotFound
 	}
 	if err != nil {
 		lgr.ErrorContext(ctx, "failed to get team members by team ID", slog.String("error", err.Error()))
+
 		return "", err
 	}
 
@@ -276,6 +247,7 @@ func (s *Service) chooseNewReviewer(
 
 	if len(candidates) == 0 {
 		lgr.InfoContext(ctx, "no available candidates for reassignment")
+
 		return "", svcErr.ErrPRNoCandidates
 	}
 
