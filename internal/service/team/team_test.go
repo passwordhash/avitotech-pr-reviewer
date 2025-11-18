@@ -18,7 +18,7 @@ import (
 
 var ErrUnexpected = errors.New("unexpected error")
 
-func TestService_TeamWithMembers(t *testing.T) { //nolint:funlen
+func TestService_TeamWithMembers(t *testing.T) {
 	tests := []struct {
 		name          string
 		teamName      string
@@ -126,7 +126,7 @@ func TestService_TeamWithMembers(t *testing.T) { //nolint:funlen
 	}
 }
 
-func TestService_CreateTeam(t *testing.T) { //nolint:funlen
+func TestService_CreateTeam(t *testing.T) {
 	tests := []struct {
 		name          string
 		teamName      string

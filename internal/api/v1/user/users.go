@@ -17,11 +17,13 @@ func (h *handler) setIsActive(c *gin.Context) {
 		return
 	}
 
-	//nolint:nolintlint    // TODO: проверка amdmin токена
-
 	user, err := h.userSvc.SetIsActive(c, req.UserID, *req.IsActive)
 	if errors.Is(err, svcErr.ErrUserNotFound) {
 		response.NewError(c, response.NotFound, "user not found", err)
+		return
+	}
+	if errors.Is(err, svcErr.ErrTeamNotFound) {
+		response.NewError(c, response.NotFound, "team not found for user", err)
 		return
 	}
 	if err != nil {

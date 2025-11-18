@@ -18,7 +18,7 @@ import (
 
 var errUnexpected = errors.New("unexpected error")
 
-func TestService_SetIsActive(t *testing.T) { //nolint:funlen
+func TestService_SetIsActive(t *testing.T) {
 	tests := []struct {
 		name          string
 		userID        string
@@ -37,13 +37,10 @@ func TestService_SetIsActive(t *testing.T) { //nolint:funlen
 					Username: "Alice",
 					IsActive: true,
 					TeamID:   "t1",
-				}, nil)
-				tr.On("GetByID", mock.Anything, "t1").Return(&domain.Team{
-					ID:   "t1",
-					Name: "devops",
+					TeamName: "AI",
 				}, nil)
 			},
-			expectedUser: &domain.User{ID: "u1", Username: "Alice", IsActive: true, TeamID: "t1", TeamName: "devops"},
+			expectedUser: &domain.User{ID: "u1", Username: "Alice", IsActive: true, TeamID: "t1", TeamName: "AI"},
 		},
 		{
 			name:     "error - user not found",
@@ -56,43 +53,21 @@ func TestService_SetIsActive(t *testing.T) { //nolint:funlen
 			expectedError: svcErr.ErrUserNotFound,
 		},
 		{
-			name:     "error - unexpected from user repo",
-			userID:   "u2",
-			isActive: true,
+			name:     "error - users team not found",
+			userID:   "u1",
+			isActive: false,
 			setupMocks: func(u *usermocks.MockUserRepository, tr *usermocks.MockTeamRepository) {
-				u.On("SetIsActive", mock.Anything, "u2", true).Return((*domain.User)(nil), errUnexpected)
-			},
-			expectedUser:  nil,
-			expectedError: errUnexpected,
-		},
-		{
-			name:     "error - team not found",
-			userID:   "u3",
-			isActive: true,
-			setupMocks: func(u *usermocks.MockUserRepository, tr *usermocks.MockTeamRepository) {
-				u.On("SetIsActive", mock.Anything, "u3", true).Return(&domain.User{
-					ID:       "u3",
-					Username: "Bob",
-					IsActive: true,
-					TeamID:   "t404",
-				}, nil)
-				tr.On("GetByID", mock.Anything, "t404").Return((*domain.Team)(nil), repoErr.ErrTeamNotFound)
+				u.On("SetIsActive", mock.Anything, "u1", false).Return((*domain.User)(nil), repoErr.ErrTeamNotFound)
 			},
 			expectedUser:  nil,
 			expectedError: svcErr.ErrTeamNotFound,
 		},
 		{
-			name:     "error - unexpected from team repo",
-			userID:   "u4",
+			name:     "error - unexpected from repo",
+			userID:   "u2",
 			isActive: true,
 			setupMocks: func(u *usermocks.MockUserRepository, tr *usermocks.MockTeamRepository) {
-				u.On("SetIsActive", mock.Anything, "u4", true).Return(&domain.User{
-					ID:       "u4",
-					Username: "Eve",
-					IsActive: true,
-					TeamID:   "t1",
-				}, nil)
-				tr.On("GetByID", mock.Anything, "t1").Return((*domain.Team)(nil), errUnexpected)
+				u.On("SetIsActive", mock.Anything, "u2", true).Return((*domain.User)(nil), errUnexpected)
 			},
 			expectedUser:  nil,
 			expectedError: errUnexpected,

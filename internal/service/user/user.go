@@ -42,7 +42,9 @@ func New(
 	}
 }
 
-// SetIsActive ...
+// SetIsActive обновляет статус активности пользователя.
+// Если пользователь не найден, возвращается svcErr.ErrUserNotFound.
+// Если команда пользователя не найдена, возвращается svcErr.ErrTeamNotFound.
 func (s *Service) SetIsActive(ctx context.Context, userID string, isActive bool) (*domain.User, error) {
 	const op = "user.SetIsActive"
 
@@ -58,18 +60,8 @@ func (s *Service) SetIsActive(ctx context.Context, userID string, isActive bool)
 
 		return nil, svcErr.ErrUserNotFound
 	}
-	if err != nil {
-		lgr.ErrorContext(ctx, "failed to set is active", slog.Any("error", err))
-
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	//nolint:nolintlint,godox    // TODO: операция получается не атомарной, нужно подумать как это исправить
-	lgr.Info("user active status updated successfully")
-
-	teamItem, err := s.teamRepo.GetByID(ctx, userItem.TeamID)
 	if errors.Is(err, repoErr.ErrTeamNotFound) {
-		lgr.DebugContext(ctx, "team not found", slog.Any("error", err))
+		lgr.DebugContext(ctx, "user's team not found", slog.Any("error", err))
 
 		return nil, svcErr.ErrTeamNotFound
 	}
@@ -79,7 +71,7 @@ func (s *Service) SetIsActive(ctx context.Context, userID string, isActive bool)
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	userItem.TeamName = teamItem.Name
+	lgr.Info("user active status updated successfully")
 
 	return userItem, nil
 }

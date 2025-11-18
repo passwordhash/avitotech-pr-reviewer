@@ -10,12 +10,13 @@ type User struct {
 }
 
 
-func (u User) ToUserDomain() *domain.User {
+func (u User) ToUserDomain(teamName string) *domain.User {
 	return &domain.User{
 		ID:       u.UserID,
 		Username: u.Username,
 		IsActive: u.IsActive,
 		TeamID:   u.TeamID,
+		TeamName: teamName,
 	}
 }
 

@@ -17,7 +17,7 @@ type PullRequest struct {
 	MergedAt            sql.NullTime `db:"merged_at"`
 }
 
-func (pr *PullRequest) ToDomain(status domain.PRStatus) *domain.PullRequest {
+func (pr *PullRequest) ToDomain(reviewerIDs []string, status domain.PRStatus) *domain.PullRequest {
 	var mergedAt *time.Time
 	if pr.MergedAt.Valid {
 		mergedAt = &pr.MergedAt.Time
@@ -28,6 +28,7 @@ func (pr *PullRequest) ToDomain(status domain.PRStatus) *domain.PullRequest {
 		Name:                pr.Name,
 		AuthorID:            pr.AuthorID,
 		Status:              status,
+		Reviewers:           reviewerIDs,
 		InNeedMoreReviewers: pr.InNeedMoreReviewers,
 		CreatedAt:           pr.CreatedAt,
 		MergedAt:            mergedAt,
