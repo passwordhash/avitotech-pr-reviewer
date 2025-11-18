@@ -83,7 +83,9 @@ func (h *handler) reassign(c *gin.Context) {
 
 	pr, replacedBy, err := h.prSvc.ReassignReviewer(c, req.PullRequestID, req.OldReviewerID)
 	if errors.Is(err, svcErr.ErrPRNoCandidates) {
-		response.NewError(c, response.BadRequest, "no available candidates for reassignment", err)
+		response.NewError(c,
+			response.NoCandidatesForNewReviewer,
+			"no candidates available for new reviewer", err)
 
 		return
 	}

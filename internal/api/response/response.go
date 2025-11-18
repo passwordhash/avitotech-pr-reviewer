@@ -9,13 +9,14 @@ import (
 type ErrorCode string
 
 const (
-	TeamExists    ErrorCode = "TEAM_EXISTS"
-	PrExists      ErrorCode = "PR_EXISTS"
-	PrMerged      ErrorCode = "PR_MERGED"
-	NotFound      ErrorCode = "NOT_FOUND"
-	BadRequest    ErrorCode = "BAD_REQUEST"
-	Unauthorized  ErrorCode = "UNAUTHORIZED"
-	InternalError ErrorCode = "INTERNAL_ERROR"
+	TeamExists                 ErrorCode = "TEAM_EXISTS"
+	PrExists                   ErrorCode = "PR_EXISTS"
+	PrMerged                   ErrorCode = "PR_MERGED"
+	NotFound                   ErrorCode = "NOT_FOUND"
+	BadRequest                 ErrorCode = "BAD_REQUEST"
+	NoCandidatesForNewReviewer ErrorCode = "NO_CANDIDATES_FOR_NEW_REVIEWER"
+	Unauthorized               ErrorCode = "UNAUTHORIZED"
+	InternalError              ErrorCode = "INTERNAL_ERROR"
 )
 
 type ErrorResponse struct {
@@ -44,7 +45,7 @@ func NewError(
 ) {
 	var status int
 
-	switch code { //nolint:exhaustive
+	switch code {
 	case TeamExists, PrExists, PrMerged:
 		status = http.StatusConflict
 	case NotFound:
@@ -53,6 +54,10 @@ func NewError(
 		status = http.StatusBadRequest
 	case Unauthorized:
 		status = http.StatusUnauthorized
+	case NoCandidatesForNewReviewer:
+		status = http.StatusUnprocessableEntity
+	case InternalError:
+		status = http.StatusInternalServerError
 	default:
 		status = http.StatusInternalServerError
 	}

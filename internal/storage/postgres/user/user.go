@@ -55,8 +55,16 @@ func (r *Repository) ListByTeamID(ctx context.Context, teamID string) ([]domain.
 }
 
 // SetIsActive обновляет статус активности пользователя.
+// Возвращает обновленного пользователя с именем команды.
+// Если пользователь не найден, возвращается ошибка repoErr.ErrUserNotFound.
+// Может вернуть repoErr.ErrTeamNotFound, если команда пользователя не найдена.
 func (r *Repository) SetIsActive(ctx context.Context, userID string, isActive bool) (*domain.User, error) {
 	const op = "repository.user.SetIsActive"
+
+	teamName, err := r.getUsersTeamName(ctx, r.db, userID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: get user's team name: %w", op, err)
+	}
 
 	const updateQuery = `
 		UPDATE users
@@ -67,7 +75,7 @@ func (r *Repository) SetIsActive(ctx context.Context, userID string, isActive bo
 
 	row := r.db.QueryRow(ctx, updateQuery, isActive, userID)
 	var userDB model.User
-	err := row.Scan(&userDB.UserID, &userDB.Username, &userDB.IsActive, &userDB.TeamID)
+	err = row.Scan(&userDB.UserID, &userDB.Username, &userDB.IsActive, &userDB.TeamID)
 	if pgPkg.IsNoRowsError(err) {
 		return nil, fmt.Errorf("%s: %w", op, repoErr.ErrUserNotFound)
 	}
@@ -75,13 +83,19 @@ func (r *Repository) SetIsActive(ctx context.Context, userID string, isActive bo
 		return nil, fmt.Errorf("%s: scan row: %w", op, err)
 	}
 
-	return userDB.ToUserDomain(), nil
+	return userDB.ToUserDomain(teamName), nil
 }
 
 // GetByID возвращает пользователя по его идентификатору.
 // Если пользователь не найден, возвращается ошибка repoErr.ErrUserNotFound.
+// Может вернуть repoErr.ErrTeamNotFound, если команда пользователя не найдена.
 func (r *Repository) GetByID(ctx context.Context, userID string) (*domain.User, error) {
 	const op = "repository.user.GetByID"
+
+	teamName, err := r.getUsersTeamName(ctx, r.db, userID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: get user's team name: %w", op, err)
+	}
 
 	const getQuery = `
 		SELECT user_id, username, is_active, team_id
@@ -91,7 +105,7 @@ func (r *Repository) GetByID(ctx context.Context, userID string) (*domain.User, 
 
 	row := r.db.QueryRow(ctx, getQuery, userID)
 	var userDB model.User
-	err := row.Scan(&userDB.UserID, &userDB.Username, &userDB.IsActive, &userDB.TeamID)
+	err = row.Scan(&userDB.UserID, &userDB.Username, &userDB.IsActive, &userDB.TeamID)
 	if pgPkg.IsNoRowsError(err) {
 		return nil, fmt.Errorf("%s: %w", op, repoErr.ErrUserNotFound)
 	}
@@ -99,5 +113,28 @@ func (r *Repository) GetByID(ctx context.Context, userID string) (*domain.User, 
 		return nil, fmt.Errorf("%s: scan row: %w", op, err)
 	}
 
-	return userDB.ToUserDomain(), nil
+	return userDB.ToUserDomain(teamName), nil
+}
+
+func (r *Repository) getUsersTeamName(ctx context.Context, q pgPkg.Querier, userID string) (string, error) {
+	const op = "repository.user.getUsersTeamName"
+
+	const query = `
+		SELECT t.name
+		FROM users u
+		JOIN teams t ON u.team_id = t.team_id
+		WHERE u.user_id = $1
+	`
+
+	row := q.QueryRow(ctx, query, userID)
+	var teamName string
+	err := row.Scan(&teamName)
+	if pgPkg.IsNoRowsError(err) {
+		return "", fmt.Errorf("%s: %w", op, repoErr.ErrTeamNotFound)
+	}
+	if err != nil {
+		return "", fmt.Errorf("%s: scan row: %w", op, err)
+	}
+
+	return teamName, nil
 }
