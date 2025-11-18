@@ -17,7 +17,7 @@ type PrRepository interface {
 	GetByID(ctx context.Context, prID string) (*domain.PullRequest, error)
 	GetReviewerIDs(ctx context.Context, prID string) ([]string, error)
 	SetMerged(ctx context.Context, prID string) (*domain.PullRequest, error)
-	SetNewReviewer(ctx context.Context, prID, oldReviewerID, newReviewerID string) (*domain.PullRequest, error)
+	UpdateReviewer(ctx context.Context, prID, oldReviewerID, newReviewerID string) (*domain.PullRequest, error)
 }
 
 type UserRepository interface {
@@ -182,12 +182,16 @@ func (s *Service) ReassignReviewer(
 		return nil, "", err
 	}
 
+	if pullRequest.Status == domain.PRStatusMerged {
+		return nil, "", svcErr.ErrPRAlreadyMerged
+	}
+
 	newReviewerID, err := s.chooseNewReviewer(ctx, pullRequest, oldReviewerID, lgr)
 	if err != nil {
 		return nil, "", err
 	}
 
-	updatedPR, err := s.prRepo.SetNewReviewer(ctx, prID, oldReviewerID, newReviewerID)
+	updatedPR, err := s.prRepo.UpdateReviewer(ctx, prID, oldReviewerID, newReviewerID)
 	if errors.Is(err, repoErr.ErrPRNotFound) {
 		lgr.DebugContext(ctx, "pull request not found", slog.String("error", err.Error()))
 
@@ -226,7 +230,7 @@ func (s *Service) chooseNewReviewer(
 		return "", err
 	}
 
-	teamMembers, err := s.teamRepo.GetActiveMembersByTeamID(ctx, prAuthor.TeamID)
+	activeTeamMembers, err := s.teamRepo.GetActiveMembersByTeamID(ctx, prAuthor.TeamID)
 	if errors.Is(err, repoErr.ErrTeamNotFound) {
 		lgr.DebugContext(ctx, "team not found", slog.String("error", err.Error()))
 
@@ -238,9 +242,11 @@ func (s *Service) chooseNewReviewer(
 		return "", err
 	}
 
-	candidates := make([]string, 0, len(teamMembers))
-	for _, member := range teamMembers {
-		if member.ID != prAuthor.ID && member.ID != oldReviewerID {
+	candidates := make([]string, 0, len(activeTeamMembers))
+	for _, member := range activeTeamMembers {
+		excluded := append([]string{}, pr.Reviewers...)
+		excluded = append(excluded, oldReviewerID, prAuthor.ID)
+		if !slices.Contains(excluded, member.ID) {
 			candidates = append(candidates, member.ID)
 		}
 	}

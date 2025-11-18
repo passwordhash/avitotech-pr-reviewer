@@ -116,10 +116,10 @@ func (r *Repository) GetReviewerIDs(ctx context.Context, prID string) ([]string,
 	return reviewerIDs, nil
 }
 
-// SetNewReviewer заменяет старого ревьюера новым для указанного Pull Request.
+// UpdateReviewer заменяет старого ревьюера новым для указанного Pull Request.
 // Если указанный Pull Request не найден, возвращается ошибка repoErr.ErrPRNotFound.
 // Если указанный старый ревьюер не назначен на этот Pull Request, возвращается ошибка repoErr.ErrUserNotFound.
-func (r *Repository) SetNewReviewer(
+func (r *Repository) UpdateReviewer(
 	ctx context.Context,
 	prID, oldReviewerID, newReviewerID string,
 ) (*domain.PullRequest, error) {

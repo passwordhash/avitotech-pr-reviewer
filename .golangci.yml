@@ -5,12 +5,14 @@ run:
 
 linters:
     exclusions:
-        paths:
-            - tests/
         rules:
             - path: '(.+)_test\.go'
               linters:
                   - funlen
+                  - lll
+                  - maintidx
+                  - gochecknoinits
+                  - gochecknoglobals
 
     default: all
     disable:
