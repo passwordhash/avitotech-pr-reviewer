@@ -4,7 +4,7 @@ services:
         restart: always
         ports:
             - "${POSTGRES_PORT:-5432}:5432"
-        env_file: .env.local
+        env_file: .env
         environment:
             POSTGRES_DB: ${POSTGRES_DB}
             POSTGRES_USER: ${POSTGRES_USER}
@@ -26,7 +26,7 @@ services:
 
     migrate:
         image: migrate/migrate:v4.18.1
-        env_file: .env.local
+        env_file: .env
         networks:
             - shared-net
         entrypoint:
@@ -48,7 +48,7 @@ services:
             dockerfile: Dockerfile.dev
         ports:
             - "8080:8080"
-        env_file: .env.local
+        env_file: .env
         networks:
             - shared-net
         depends_on:

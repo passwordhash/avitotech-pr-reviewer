@@ -3,7 +3,8 @@
 .DS_Store
 .env
 *.env*
-!.env.local
+!.env
+!.env.example
 !.env.example
 
 

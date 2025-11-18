@@ -1,4 +1,4 @@
-ENV_FILE ?= .env.local
+ENV_FILE ?= .env
 
 .EXPORT_ALL_VARIABLES:
 include $(ENV_FILE)
@@ -8,7 +8,8 @@ include $(ENV_FILE)
 # ==========================
 up:
 	docker compose \
-		--env-file .env.local \
+		--env-file $(ENV_FILE) \
+		-f docker-compose.yml \
 		-p pr-reviewer \
 		up -d --build
 
